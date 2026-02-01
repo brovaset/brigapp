@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?   // Optional for Google OAuth users
+  googleId      String?   @unique // Google OAuth sub
+  firstName     String
+  lastName      String
+  phone         String?
+  role          String    @default("BOTH") // DRIVER, HOST, or BOTH
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Host fields
+  stripeAccountId String?
+  listings       Listing[]
+  receivedBookings Booking[] @relation("HostBookings")
+  receivedRatings Rating[]   @relation("HostRatings")
+
+  // Driver fields
+  bookings      Booking[] @relation("DriverBookings")
+  givenRatings  Rating[]  @relation("DriverRatings")
+  messages      Message[] @relation("SenderMessages")
+  receivedMessages Message[] @relation("ReceiverMessages")
+  savedListings SavedListing[]
+}
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+}
+
+model Listing {
+  id              String    @id @default(cuid())
+  hostId          String
+  host            User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  address         String
+  city            String
+  state           String
+  zipCode         String
+  latitude        Float
+  longitude       Float
+  pricePerHour    Float
+  pricePerDay     Float
+  maxVehicleSize  String?   // e.g., "SUV", "Sedan", "Truck"
+  photos          String    // JSON string array of photo URLs
+  entryInstructions String?
+  amenities       String?   // JSON: covered, evCharging, gated, accessible24_7
+  instantBook     Boolean   @default(true)
+  cancellationPolicy String @default("FLEXIBLE") // FLEXIBLE, MODERATE, STRICT
+  houseRules      String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  bookings        Booking[]
+  blockedDates    BlockedDate[]
+  ratings         Rating[]
+  savedBy         SavedListing[]
+}
+
+model BlockedDate {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  createdAt   DateTime @default(now())
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  driverId        String
+  driver          User          @relation("DriverBookings", fields: [driverId], references: [id], onDelete: Cascade)
+  listingId       String
+  listing         Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  hostId          String
+  host            User          @relation("HostBookings", fields: [hostId], references: [id], onDelete: Cascade)
+  startTime       DateTime
+  endTime         DateTime
+  vehicleMake     String
+  vehicleModel    String
+  licensePlate    String
+  totalAmount     Float
+  status          String        @default("PENDING") // PENDING, CONFIRMED, ACTIVE, COMPLETED, CANCELLED
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  payment         Payment?
+  messages        Message[]
+  driverRating    Rating?   @relation("DriverRatings")
+  hostRating      Rating?   @relation("HostRatings")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  bookingId       String       @unique
+  booking         Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  stripePaymentId String       @unique
+  amount          Float
+  status          String       @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Rating {
+  id          String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(name: "DriverRatings", fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingHostId String? @unique
+  bookingHost Booking? @relation(name: "HostRatings", fields: [bookingHostId], references: [id], onDelete: Cascade)
+  driverId   String
+  driver     User     @relation("DriverRatings", fields: [driverId], references: [id], onDelete: Cascade)
+  hostId     String
+  host       User     @relation("HostRatings", fields: [hostId], references: [id], onDelete: Cascade)
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  rating     Int      // 1-5 stars
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User     @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
