@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { loadStripe } from '@stripe/stripe-js'
+import StripePaymentForm from '@/components/StripePaymentForm'
 import { formatCurrency } from '@/lib/utils'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
 
 export default function PaymentPage() {
   const params = useParams()
   const router = useRouter()
   const [booking, setBooking] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [processing, setProcessing] = useState(false)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -21,76 +20,53 @@ export default function PaymentPage() {
         const data = await res.json()
 
         if (!res.ok) {
-          alert(data.error || 'Booking not found')
-          router.push('/dashboard')
+          setError(data.error || 'Booking not found')
           return
         }
 
         setBooking(data.booking)
-      } catch (error) {
-        console.error('Error fetching booking:', error)
+      } catch (err) {
+        console.error('Error fetching booking:', err)
+        setError('Failed to load booking')
       } finally {
         setLoading(false)
       }
     }
 
     fetchBooking()
-  }, [params.id, router])
+  }, [params.id])
 
-  const handlePayment = async () => {
-    if (!booking) return
+  useEffect(() => {
+    if (!booking || clientSecret) return
 
-    setProcessing(true)
+    const createIntent = async () => {
+      try {
+        const res = await fetch('/api/payments/create-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: booking.id }),
+        })
 
-    try {
-      // Create payment intent
-      const res = await fetch('/api/payments/create-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: booking.id }),
-      })
+        const data = await res.json()
 
-      const data = await res.json()
+        if (!res.ok) {
+          setError(data.error || 'Payment setup failed')
+          return
+        }
 
-      if (!res.ok) {
-        alert(data.error || 'Payment failed')
-        return
+        setClientSecret(data.clientSecret)
+      } catch (err) {
+        console.error('Payment setup error:', err)
+        setError('Failed to initialize payment')
       }
-
-      // Redirect to Stripe Checkout
-      const stripe = await stripePromise
-      if (!stripe) {
-        alert('Stripe not loaded')
-        return
-      }
-
-      const { error } = await stripe.confirmCardPayment(data.clientSecret, {
-        payment_method: {
-          card: {
-            number: '4242424242424242', // Test card - in production, use Stripe Elements
-            exp_month: 12,
-            exp_year: 2025,
-            cvc: '123',
-          },
-        },
-      })
-
-      if (error) {
-        alert(error.message)
-      } else {
-        router.push(`/bookings/${booking.id}`)
-      }
-    } catch (error) {
-      console.error('Payment error:', error)
-      alert('Payment failed')
-    } finally {
-      setProcessing(false)
     }
-  }
 
-  if (loading) {
+    createIntent()
+  }, [booking, clientSecret])
+
+  if (loading || !booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-car-neon border-t-transparent"></div>
           <p className="text-gray-600 text-lg font-medium">Loading...</p>
@@ -99,65 +75,97 @@ export default function PaymentPage() {
     )
   }
 
-  if (!booking) {
-    return null
+  if (error && !clientSecret) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <p className="text-car-speed mb-6">{error}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="w-full py-3 text-car-neon font-semibold hover:underline"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <p className="text-gray-600 mb-4">Stripe is not configured. Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to .env</p>
+          <button
+            onClick={() => router.back()}
+            className="w-full py-3 text-car-neon font-semibold hover:underline"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6">Complete Payment</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-900">Complete Payment</h1>
 
         <div className="space-y-4 mb-6">
           <div>
-            <p className="text-sm text-gray-600">Parking Location</p>
-            <p className="font-semibold">{booking.listing.title}</p>
-            <p className="text-sm text-gray-600">{booking.listing.address}</p>
+            <p className="text-sm text-gray-500">Parking Location</p>
+            <p className="font-semibold text-gray-900">{booking.listing?.title}</p>
+            <p className="text-sm text-gray-600">{booking.listing?.address}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-600">Parking Period</p>
-            <p className="font-semibold">
+            <p className="text-sm text-gray-500">Parking Period</p>
+            <p className="font-semibold text-gray-900">
               {new Date(booking.startTime).toLocaleString()} - {new Date(booking.endTime).toLocaleString()}
             </p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-600">Vehicle</p>
-            <p className="font-semibold">
+            <p className="text-sm text-gray-500">Vehicle</p>
+            <p className="font-semibold text-gray-900">
               {booking.vehicleMake} {booking.vehicleModel}
             </p>
             <p className="text-sm text-gray-600">License: {booking.licensePlate}</p>
           </div>
 
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t border-gray-200">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">Total Amount</span>
-              <span className="text-2xl font-bold text-primary-600">
+              <span className="text-lg font-semibold text-gray-900">Total Amount</span>
+              <span className="text-2xl font-bold text-car-electric">
                 {formatCurrency(booking.totalAmount)}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-6">
-          <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> This is a demo. In production, you would use Stripe Elements 
-            for secure card input. For testing, use Stripe test cards.
-          </p>
-        </div>
+        {clientSecret ? (
+          <StripePaymentForm
+            clientSecret={clientSecret}
+            amount={booking.totalAmount}
+            bookingId={booking.id}
+            onSuccess={() => router.push(`/bookings/${booking.id}`)}
+            onError={(msg) => setError(msg)}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-car-neon border-t-transparent"></div>
+            <p className="text-sm text-gray-500">Preparing payment form...</p>
+          </div>
+        )}
 
-        <button
-          onClick={handlePayment}
-          disabled={processing}
-          className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {processing ? 'Processing...' : `Pay ${formatCurrency(booking.totalAmount)}`}
-        </button>
+        {error && (
+          <p className="mt-4 text-sm text-car-speed">{error}</p>
+        )}
 
         <button
           onClick={() => router.back()}
-          className="w-full mt-2 text-gray-600 hover:text-gray-800"
+          className="w-full mt-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
         >
           Cancel
         </button>

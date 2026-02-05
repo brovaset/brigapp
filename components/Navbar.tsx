@@ -85,21 +85,22 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                           onClick={() => setShowUserMenu(false)}
                         />
                         <motion.div
-                          initial={{ opacity: 0, y: -10 }}
+                          initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200/80 py-1.5 z-50"
                         >
                           <Link
                             href="/profile"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:text-car-neon hover:bg-gray-50 transition-colors"
+                            className="block px-4 py-2.5 text-sm text-gray-700 hover:text-car-neon hover:bg-car-neon/5 transition-colors rounded-lg mx-1"
                             onClick={() => setShowUserMenu(false)}
                           >
                             Profile Settings
                           </Link>
                           <button
                             onClick={handleLogout}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-car-speed hover:bg-gray-50 transition-colors"
+                            className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:text-car-speed hover:bg-car-speed/5 transition-colors rounded-lg mx-1"
                           >
                             Logout
                           </button>

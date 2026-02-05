@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency } from '@/lib/utils'
-import AnimatedBackground from '@/components/AnimatedBackground'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
@@ -134,32 +133,30 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <button
           onClick={() => router.push('/host/listings')}
-          className="mb-6 text-neon-cyan hover:text-neon-pink transition-colors"
+          className="mb-6 text-car-neon hover:text-car-electric transition-colors font-medium"
         >
           ← Back to Listings
         </button>
 
-        <FloatingCard glowColor="pink" className="mb-6">
-          <h1 className="text-3xl font-bold mb-4 text-white">{listing.title}</h1>
-          <p className="text-gray-300 mb-2">{listing.address}</p>
-          <p className="text-gray-300 mb-4">{listing.description}</p>
+        <FloatingCard glowColor="neon" className="mb-6">
+          <h1 className="text-3xl font-bold mb-4 text-gray-900">{listing.title}</h1>
+          <p className="text-gray-600 mb-2">{listing.address}</p>
+          <p className="text-gray-600 mb-4">{listing.description}</p>
           
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="text-sm text-gray-400">Price per Hour</p>
-              <p className="text-xl font-semibold text-neon-cyan">
+              <p className="text-sm text-gray-500">Price per Hour</p>
+              <p className="text-xl font-semibold text-car-neon">
                 {formatCurrency(listing.pricePerHour)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-400">Price per Day</p>
-              <p className="text-xl font-semibold text-neon-cyan">
+              <p className="text-sm text-gray-500">Price per Day</p>
+              <p className="text-xl font-semibold text-car-neon">
                 {formatCurrency(listing.pricePerDay)}
               </p>
             </div>
@@ -167,11 +164,11 @@ export default function ListingDetailPage() {
         </FloatingCard>
 
         {/* Blocked Dates Section */}
-        <FloatingCard glowColor="purple" className="mb-6">
+        <FloatingCard glowColor="electric" className="mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-white">Availability Calendar</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Availability Calendar</h2>
             <NeonButton
-              variant="secondary"
+              variant="outline"
               onClick={() => setShowBlockForm(!showBlockForm)}
             >
               {showBlockForm ? 'Cancel' : '+ Block Dates'}
@@ -182,11 +179,11 @@ export default function ListingDetailPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10"
+              className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
             >
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neon-cyan">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                     Start Date
                   </label>
                   <input
@@ -195,11 +192,11 @@ export default function ListingDetailPage() {
                     onChange={(e) =>
                       setBlockForm({ ...blockForm, startDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-car-neon focus:border-car-neon"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neon-cyan">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                     End Date
                   </label>
                   <input
@@ -208,12 +205,12 @@ export default function ListingDetailPage() {
                     onChange={(e) =>
                       setBlockForm({ ...blockForm, endDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-car-neon focus:border-car-neon"
                   />
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2 text-neon-cyan">
+                <label className="block text-sm font-medium mb-2 text-gray-700">
                   Reason (Optional)
                 </label>
                 <input
@@ -223,7 +220,7 @@ export default function ListingDetailPage() {
                     setBlockForm({ ...blockForm, reason: e.target.value })
                   }
                   placeholder="e.g., Personal use, Maintenance..."
-                  className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400"
+                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-car-neon focus:border-car-neon"
                 />
               </div>
               <NeonButton variant="primary" onClick={handleBlockDate}>
@@ -233,7 +230,7 @@ export default function ListingDetailPage() {
           )}
 
           {blockedDates.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">
+            <p className="text-gray-500 text-center py-4">
               No blocked dates. Your listing is available for all dates.
             </p>
           ) : (
@@ -241,20 +238,20 @@ export default function ListingDetailPage() {
               {blockedDates.map((blocked) => (
                 <div
                   key={blocked.id}
-                  className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-white/10"
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200"
                 >
                   <div>
-                    <p className="text-white font-medium">
+                    <p className="text-gray-900 font-medium">
                       {new Date(blocked.startDate).toLocaleString()} -{' '}
                       {new Date(blocked.endDate).toLocaleString()}
                     </p>
                     {blocked.reason && (
-                      <p className="text-sm text-gray-400">{blocked.reason}</p>
+                      <p className="text-sm text-gray-600">{blocked.reason}</p>
                     )}
                   </div>
                   <button
                     onClick={() => handleUnblockDate(blocked.id)}
-                    className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
+                    className="px-4 py-2 bg-car-speed/10 text-car-speed rounded-lg hover:bg-car-speed/20 transition-colors text-sm font-medium"
                   >
                     Unblock
                   </button>

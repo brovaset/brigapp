@@ -28,7 +28,14 @@ export default function NewListingPage() {
     maxVehicleSize: '',
     photos: [] as string[],
     entryInstructions: '',
-    amenities: { covered: false, evCharging: false, gated: false, accessible24_7: false },
+    amenities: {
+      covered: false,
+      evCharging: false,
+      evChargerType: '' as '' | 'level1' | 'level2' | 'tesla',
+      gated: false,
+      accessible24_7: false,
+      petFriendly: false,
+    },
     instantBook: true,
     cancellationPolicy: 'FLEXIBLE',
     houseRules: '',
@@ -92,6 +99,12 @@ export default function NewListingPage() {
     }
 
     try {
+      const { evChargerType, ...restAmenities } = formData.amenities
+      const amenitiesToSend = {
+        ...restAmenities,
+        ...(formData.amenities.evCharging && evChargerType && { evChargerType }),
+      }
+
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,7 +112,7 @@ export default function NewListingPage() {
           ...formData,
           pricePerHour: parseFloat(formData.pricePerHour.toString()),
           pricePerDay: parseFloat(formData.pricePerDay.toString()),
-          amenities: formData.amenities,
+          amenities: amenitiesToSend,
         }),
       })
 
@@ -371,26 +384,72 @@ export default function NewListingPage() {
                 <div className="flex flex-wrap gap-4">
                   {[
                     { key: 'covered', label: 'Covered', desc: 'Under cover' },
-                    { key: 'evCharging', label: 'EV charging', desc: 'EV outlet' },
+                    {
+                      key: 'evCharging',
+                      label: 'EV charging',
+                      desc: 'EV outlet',
+                      onChange: (checked: boolean) =>
+                        setFormData({
+                          ...formData,
+                          amenities: {
+                            ...formData.amenities,
+                            evCharging: checked,
+                            evChargerType: checked ? formData.amenities.evChargerType : ('' as const),
+                          },
+                        }),
+                    },
                     { key: 'gated', label: 'Gated', desc: 'Secure access' },
                     { key: 'accessible24_7', label: '24/7 access', desc: 'Anytime' },
-                  ].map(({ key, label }) => (
-                    <label key={key} className="flex items-center gap-2 cursor-pointer">
+                    { key: 'petFriendly', label: 'Pet friendly', desc: 'Pets allowed' },
+                  ].map((item) => (
+                    <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={formData.amenities[key as keyof typeof formData.amenities]}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            amenities: { ...formData.amenities, [key]: e.target.checked },
-                          })
-                        }
+                        checked={formData.amenities[item.key as keyof typeof formData.amenities] as boolean}
+                        onChange={(e) => {
+                          if ('onChange' in item) {
+                            item.onChange(e.target.checked)
+                          } else {
+                            setFormData({
+                              ...formData,
+                              amenities: { ...formData.amenities, [item.key]: e.target.checked },
+                            })
+                          }
+                        }}
                         className="rounded border-gray-300"
                       />
-                      <span className="text-sm">{label}</span>
+                      <span className="text-sm">{item.label}</span>
                     </label>
                   ))}
                 </div>
+                {formData.amenities.evCharging && (
+                  <div className="mt-4 pl-4 border-l-2 border-car-electric/30">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">EV Charger Type</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'level1', label: 'Level 1' },
+                        { value: 'level2', label: 'Level 2' },
+                        { value: 'tesla', label: 'Tesla NACS' },
+                      ].map(({ value, label }) => (
+                        <label key={value} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="evChargerType"
+                            checked={formData.amenities.evChargerType === value}
+                            onChange={() =>
+                              setFormData({
+                                ...formData,
+                                amenities: { ...formData.amenities, evChargerType: value as 'level1' | 'level2' | 'tesla' },
+                              })
+                            }
+                            className="rounded border-gray-300"
+                          />
+                          <span className="text-sm">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

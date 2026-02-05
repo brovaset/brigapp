@@ -37,8 +37,8 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
   if (compact) {
     return (
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex items-center bg-white rounded-full shadow-lg border border-gray-200 overflow-hidden hover:border-car-neon/50 hover:shadow-xl transition-all">
-          <div className="flex-1 px-6 py-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl sm:rounded-full shadow-lg border border-gray-200 overflow-hidden hover:border-car-neon/50 hover:shadow-xl transition-all gap-0 sm:gap-0">
+          <div className="flex-1 px-4 sm:px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
             <label className="block text-xs font-semibold text-gray-700 mb-1">Location</label>
             <input
               type="text"
@@ -48,8 +48,8 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
               className="w-full outline-none bg-transparent text-gray-900 placeholder-gray-400 focus:text-car-neon"
             />
           </div>
-          <div className="h-10 w-px bg-gray-200" />
-          <div className="px-6 py-3">
+          <div className="hidden sm:block h-10 w-px bg-gray-200 flex-shrink-0" />
+          <div className="px-4 sm:px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
             <label className="block text-xs font-semibold text-gray-700 mb-1">Check in</label>
             <input
               type="date"
@@ -58,8 +58,8 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
               className="w-full outline-none bg-transparent text-gray-900 text-sm focus:text-car-neon"
             />
           </div>
-          <div className="h-10 w-px bg-gray-200" />
-          <div className="px-6 py-3">
+          <div className="hidden sm:block h-10 w-px bg-gray-200 flex-shrink-0" />
+          <div className="px-4 sm:px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
             <label className="block text-xs font-semibold text-gray-700 mb-1">Check out</label>
             <input
               type="date"
@@ -68,8 +68,8 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
               className="w-full outline-none bg-transparent text-gray-900 text-sm focus:text-car-neon"
             />
           </div>
-          <div className="h-10 w-px bg-gray-200" />
-          <div className="px-6 py-3">
+          <div className="hidden sm:block h-10 w-px bg-gray-200 flex-shrink-0" />
+          <div className="px-4 sm:px-6 py-3">
             <label className="block text-xs font-semibold text-gray-700 mb-1">Guests</label>
             <input
               type="text"
@@ -79,7 +79,7 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
           </div>
           <button
             type="submit"
-            className="m-2 p-3 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-full hover:from-car-neon/90 hover:to-car-electric/90 transition-all shadow-md"
+            className="m-2 p-3 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-xl sm:rounded-full hover:from-car-neon/90 hover:to-car-electric/90 transition-all shadow-md font-semibold text-sm hover:shadow-lg active:scale-[0.98]"
           >
             Search
           </button>

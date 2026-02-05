@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency } from '@/lib/utils'
-import AnimatedBackground from '@/components/AnimatedBackground'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
@@ -53,47 +52,45 @@ export default function EarningsPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <button
           onClick={() => router.push('/dashboard')}
-          className="mb-6 text-neon-cyan hover:text-neon-pink transition-colors"
+          className="mb-6 text-car-neon hover:text-car-electric transition-colors font-medium"
         >
           ← Back to Dashboard
         </button>
 
-        <h1 className="text-4xl font-bold mb-8 gradient-text">Payout Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-8 text-gray-900">Payout Dashboard</h1>
 
         {/* Summary Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <FloatingCard glowColor="cyan" delay={0}>
-            <p className="text-sm text-gray-400 mb-2">Total Earnings</p>
-            <p className="text-3xl font-bold text-neon-cyan">
+          <FloatingCard glowColor="neon" delay={0}>
+            <p className="text-sm text-gray-500 mb-2">Total Earnings</p>
+            <p className="text-3xl font-bold text-car-neon">
               {formatCurrency(earnings.totalEarnings)}
             </p>
           </FloatingCard>
-          <FloatingCard glowColor="pink" delay={0.1}>
-            <p className="text-sm text-gray-400 mb-2">This Month</p>
-            <p className="text-3xl font-bold text-neon-pink">
+          <FloatingCard glowColor="electric" delay={0.1}>
+            <p className="text-sm text-gray-500 mb-2">This Month</p>
+            <p className="text-3xl font-bold text-car-electric">
               {formatCurrency(earnings.thisMonthEarnings)}
             </p>
           </FloatingCard>
-          <FloatingCard glowColor="purple" delay={0.2}>
-            <p className="text-sm text-gray-400 mb-2">Total Bookings</p>
-            <p className="text-3xl font-bold text-neon-purple">
+          <FloatingCard glowColor="turbo" delay={0.2}>
+            <p className="text-sm text-gray-500 mb-2">Total Bookings</p>
+            <p className="text-3xl font-bold text-car-turbo">
               {earnings.totalBookings}
             </p>
           </FloatingCard>
         </div>
 
         {/* Transactions */}
-        <FloatingCard glowColor="purple">
-          <h2 className="text-2xl font-bold mb-6 text-white">Transaction History</h2>
+        <FloatingCard glowColor="neutral">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Transaction History</h2>
           
           {earnings.transactions.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">
+            <p className="text-gray-500 text-center py-8">
               No completed transactions yet
             </p>
           ) : (
@@ -103,17 +100,17 @@ export default function EarningsPage() {
                   key={transaction.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-white/5 rounded-lg border border-white/10"
+                  className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold text-white mb-1">
+                      <p className="font-semibold text-gray-900 mb-1">
                         {transaction.listing.title}
                       </p>
-                      <p className="text-sm text-gray-400 mb-1">
+                      <p className="text-sm text-gray-600 mb-1">
                         {transaction.listing.address}
                       </p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-gray-600">
                         Driver: {transaction.driver.firstName} {transaction.driver.lastName}
                       </p>
                       <p className="text-xs text-gray-500 mt-2">
@@ -121,13 +118,13 @@ export default function EarningsPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-neon-cyan mb-1">
+                      <p className="text-xl font-bold text-car-electric mb-1">
                         {formatCurrency(transaction.amount)}
                       </p>
                       <span className={`px-2 py-1 rounded text-xs ${
                         transaction.paymentStatus === 'COMPLETED'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
+                          ? 'bg-car-electric/20 text-car-electric'
+                          : 'bg-amber-100 text-amber-800'
                       }`}>
                         {transaction.paymentStatus}
                       </span>

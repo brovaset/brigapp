@@ -30,6 +30,7 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   const [userMarker, setUserMarker] = useState<google.maps.Marker | null>(null)
   const [loading, setLoading] = useState(true)
+  const [apiKeyMissing, setApiKeyMissing] = useState(false)
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [trackingEnabled, setTrackingEnabled] = useState(false)
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null)
@@ -40,7 +41,7 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
     const loadMap = async () => {
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
       if (!apiKey) {
-        console.error('Google Maps API key not found')
+        setApiKeyMissing(true)
         setLoading(false)
         return
       }
@@ -54,7 +55,10 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
       try {
         await loader.load()
 
-        if (!mapRef.current) return
+        if (!mapRef.current) {
+          setLoading(false)
+          return
+        }
 
         const defaultLocation = userLocation || { lat: 40.7128, lng: -74.0060 } // NYC default
 
@@ -88,8 +92,16 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
               
               loadListings(userPos.lat, userPos.lng, mapInstance)
             },
-            (error) => {
-              console.error('Geolocation error:', error)
+            (error: GeolocationPositionError) => {
+              // Geolocation failed (permission denied, timeout, or unavailable) - fall back to default location
+              const messages: Record<number, string> = {
+                1: 'Location permission denied',
+                2: 'Location unavailable',
+                3: 'Location request timed out',
+              }
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Geolocation:', messages[error?.code] ?? 'Could not get location')
+              }
               loadListings(defaultLocation.lat, defaultLocation.lng, mapInstance)
             },
             {
@@ -201,8 +213,7 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
           loadListings(userPos.lat, userPos.lng, mapInstanceRef.current)
         }
       },
-      (error) => {
-        console.error('Tracking error:', error)
+      () => {
         setTrackingEnabled(false)
       },
       {
@@ -293,12 +304,23 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
     }
   }
 
-  if (loading) {
+  if (apiKeyMissing) {
     return (
-      <div className="w-full h-[600px] bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-car-neon border-t-transparent"></div>
-          <p className="text-gray-600 font-medium">Loading map...</p>
+      <div className="w-full h-[600px] bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
+        <div className="max-w-md p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-car-neon/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-car-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Map unavailable</h3>
+          <p className="text-gray-600 text-sm mb-4">
+            Add <code className="px-2 py-0.5 bg-gray-200 rounded text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to your <code className="px-2 py-0.5 bg-gray-200 rounded text-xs">.env</code> file to enable the map view.
+          </p>
+          <p className="text-gray-500 text-xs">
+            Get an API key from Google Cloud Console (Maps JavaScript API). Then restart the dev server.
+          </p>
         </div>
       </div>
     )
@@ -306,7 +328,15 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
 
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-gray-200 shadow-lg">
-      <div ref={mapRef} className="w-full h-full" />
+      <div ref={mapRef} className="w-full h-full min-h-[400px]" />
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/95 z-20">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-car-neon border-t-transparent"></div>
+            <p className="text-gray-600 font-medium">Loading map...</p>
+          </div>
+        </div>
+      )}
       
       {/* GPS Tracking Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">

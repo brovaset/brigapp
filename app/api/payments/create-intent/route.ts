@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import Stripe from 'stripe'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+import { stripe } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +34,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured. Add STRIPE_SECRET_KEY to .env' },
+        { status: 503 }
+      )
+    }
+
     if (booking.driverId !== session.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
@@ -49,10 +52,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create payment intent
+    // Create payment intent (use automatic_payment_methods for Payment Element)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(booking.totalAmount * 100), // Convert to cents
       currency: 'usd',
+      automatic_payment_methods: { enabled: true },
       metadata: {
         bookingId: booking.id,
         driverId: booking.driverId,
@@ -60,13 +64,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Update booking with payment intent
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: 'CONFIRMED' },
-    })
+    // Keep booking PENDING until payment succeeds (webhook will update)
 
-    // Create payment record
+    // Create payment record (status PENDING until webhook confirms)
     await prisma.payment.create({
       data: {
         bookingId: booking.id,

@@ -70,21 +70,27 @@ export default function SavedPage() {
         </motion.div>
 
         {savedListings.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-car-electric/20 flex items-center justify-center mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl shadow-sm border border-gray-200/80 p-12 text-center"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-car-electric/10 flex items-center justify-center mx-auto mb-5">
               <svg className="w-8 h-8 text-car-electric" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">No saved listings yet</h2>
-            <p className="text-gray-600 mb-6">
-              Start exploring and save your favorite parking spots
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No saved listings yet</h2>
+            <p className="text-gray-600 mb-6 max-w-sm mx-auto leading-relaxed">
+              Start exploring and save your favorite parking spots for quick access later
             </p>
-            <button
-              onClick={() => router.push('/search')}
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
-            >
-              Explore Listings
-            </button>
-          </div>
+            <Link href="/search">
+              <button
+                type="button"
+                className="px-6 py-3 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-lg hover:opacity-90 transition-opacity font-semibold shadow-md"
+              >
+                Explore Listings
+              </button>
+            </Link>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {savedListings.map((listing, index) => (

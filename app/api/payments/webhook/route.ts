@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
-import Stripe from 'stripe'
+import { stripe, getStripeWebhookSecret } from '@/lib/stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
+const webhookSecret = getStripeWebhookSecret() || ''
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -47,7 +44,7 @@ export async function POST(request: NextRequest) {
         include: { booking: true },
       })
 
-      if (payment && payment.booking.status === 'CONFIRMED') {
+      if (payment && (payment.booking.status === 'PENDING' || payment.booking.status === 'CONFIRMED')) {
         await prisma.booking.update({
           where: { id: payment.bookingId },
           data: { status: 'ACTIVE' },

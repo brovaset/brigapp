@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import AnimatedBackground from '@/components/AnimatedBackground'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { LoadingSpinner, Modal, ErrorMessage } from '@/components/ui'
@@ -94,21 +93,18 @@ export default function HostListingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-        <AnimatedBackground />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <LoadingSpinner size="lg" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <button
           onClick={() => router.push('/dashboard')}
-          className="mb-6 text-neon-cyan hover:text-neon-pink transition-colors"
+          className="mb-6 text-car-neon hover:text-car-electric transition-colors font-medium"
         >
           ← Back to Dashboard
         </button>
@@ -117,7 +113,7 @@ export default function HostListingsPage() {
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold gradient-text"
+            className="text-4xl font-bold text-gray-900"
           >
             My Listings
           </motion.h1>
@@ -131,13 +127,13 @@ export default function HostListingsPage() {
         {error && <ErrorMessage message={error} className="mb-6" onClose={() => setError('')} />}
 
         {listings.length === 0 ? (
-          <FloatingCard glowColor="cyan" delay={0}>
+          <FloatingCard glowColor="electric" delay={0}>
             <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-car-neon/20 flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-car-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h8m0 0v8m0-8l-3 3m3-3l-3 3" /></svg>
+              <div className="w-16 h-16 rounded-full bg-car-electric/20 flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-8 h-8 text-car-electric" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h8m0 0v8m0-8l-3 3m3-3l-3 3" /></svg>
               </div>
-              <h2 className="text-2xl font-bold mb-4 text-white">No Listings Yet</h2>
-              <p className="text-gray-300 mb-8">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">No Listings Yet</h2>
+              <p className="text-gray-600 mb-8">
                 Create your first listing to start earning passive income from your parking space
               </p>
               <Link href="/host/listings/new">
@@ -156,34 +152,34 @@ export default function HostListingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <FloatingCard glowColor={listing.isActive ? 'cyan' : 'purple'} delay={0}>
+                <FloatingCard glowColor={listing.isActive ? 'electric' : 'turbo'} delay={0}>
                   <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-xl font-semibold mb-2 text-white flex-1">{listing.title}</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-gray-900 flex-1">{listing.title}</h2>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ml-2 ${
                         listing.isActive
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                          : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                          ? 'bg-car-electric/20 text-car-electric border border-car-electric/40'
+                          : 'bg-gray-200 text-gray-600 border border-gray-300'
                       }`}
                     >
                       {listing.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="text-gray-300 text-sm mb-4 line-clamp-2">{listing.address}</p>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{listing.address}</p>
 
                   <div className="mb-4">
-                    <p className="text-sm text-gray-400 mb-1">Pricing</p>
-                    <p className="font-semibold text-neon-cyan">
+                    <p className="text-sm text-gray-500 mb-1">Pricing</p>
+                    <p className="font-semibold text-car-neon">
                       {formatCurrency(listing.pricePerHour)}/hour
                     </p>
-                    <p className="text-sm text-gray-300">
+                    <p className="text-sm text-gray-600">
                       {formatCurrency(listing.pricePerDay)}/day
                     </p>
                   </div>
 
                   {listing.maxVehicleSize && (
-                    <p className="text-sm text-gray-400 mb-4">
-                      Max size: <span className="text-neon-pink">{listing.maxVehicleSize}</span>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Max size: <span className="text-car-electric font-medium">{listing.maxVehicleSize}</span>
                     </p>
                   )}
 
@@ -191,17 +187,17 @@ export default function HostListingsPage() {
                     <div className="mb-4">
                       <div className="flex items-center gap-1">
                         <svg className="w-4 h-4 fill-yellow-400 inline" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" /></svg>
-                        <span className="text-white font-semibold">
+                        <span className="text-gray-900 font-semibold">
                           {listing.averageRating.toFixed(1)}
                         </span>
-                        <span className="text-gray-400 text-sm">
+                        <span className="text-gray-500 text-sm">
                           ({listing.ratingCount || 0} reviews)
                         </span>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-4 border-t border-white/10">
+                  <div className="flex gap-2 pt-4 border-t border-gray-200">
                     <Link href={`/host/listings/${listing.id}`} className="flex-1">
                       <NeonButton variant="outline" className="w-full text-sm">
                         Manage
@@ -219,7 +215,7 @@ export default function HostListingsPage() {
                   <NeonButton
                     variant="outline"
                     onClick={() => setDeleteConfirm(listing.id)}
-                    className="w-full mt-2 text-sm border-red-500/50 text-red-400 hover:bg-red-500/20"
+                    className="w-full mt-2 text-sm border-car-speed/50 text-car-speed hover:bg-car-speed/10"
                   >
                     Delete
                   </NeonButton>
@@ -243,14 +239,14 @@ export default function HostListingsPage() {
               <NeonButton
                 variant="primary"
                 onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-                className="bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30"
+                className="bg-car-speed/20 border-car-speed/50 text-car-speed hover:bg-car-speed/30"
               >
                 Delete
               </NeonButton>
             </>
           }
         >
-          <p className="text-gray-300">
+          <p className="text-gray-600">
             Are you sure you want to delete this listing? This action cannot be undone.
           </p>
         </Modal>

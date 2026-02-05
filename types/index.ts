@@ -14,6 +14,16 @@ export interface AuthUser {
   role: string
 }
 
+// Listing Amenities (stored as JSON)
+export interface ListingAmenities {
+  covered?: boolean
+  evCharging?: boolean
+  evChargerType?: 'level1' | 'level2' | 'tesla'
+  gated?: boolean
+  accessible24_7?: boolean
+  petFriendly?: boolean
+}
+
 // Listing Types
 export interface Listing {
   id: string
@@ -29,6 +39,8 @@ export interface Listing {
   pricePerDay: number
   maxVehicleSize?: string | null
   photos: string[]
+  amenities?: ListingAmenities | string | null
+  instantBook?: boolean
   entryInstructions?: string | null
   isActive: boolean
   hostId: string

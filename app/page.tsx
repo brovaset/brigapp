@@ -57,8 +57,8 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section with Search */}
-      <div className="relative bg-gradient-to-b from-gray-50/80 via-white to-gray-50/80 pb-16 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
+      <div className="relative bg-gradient-to-b from-gray-50/90 via-white to-gray-50/90 pb-20 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -72,10 +72,10 @@ export default function Home() {
             >
               <Logo size="lg" showText={false} />
             </motion.div>
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
               Find parking near you
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Discover driveways, parking spots, and spaces available for rent in your area
             </p>
           </motion.div>
@@ -93,9 +93,9 @@ export default function Home() {
       </div>
 
       {/* Featured Listings */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Explore parking spaces</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Explore parking spaces</h2>
           <motion.button
             onClick={() => router.push('/search')}
             whileHover={{ x: 4 }}
@@ -124,16 +124,21 @@ export default function Home() {
         )}
 
         {listings.length === 0 && !loadingListings && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No listings available at the moment</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16 px-6 bg-white/80 rounded-xl border border-gray-200/80"
+          >
+            <p className="text-gray-600 text-lg mb-2">No listings available at the moment</p>
+            <p className="text-gray-500 text-sm">Check back soon or try a different location</p>
+          </motion.div>
         )}
       </div>
 
       {/* Features Section */}
-      <div className="bg-gray-50 py-16 mt-16 border-t border-gray-200">
+      <div className="bg-gray-50/80 py-20 mt-20 border-t border-gray-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-14 tracking-tight">
             Why choose BRIGAP?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">

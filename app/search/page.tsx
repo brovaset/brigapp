@@ -11,8 +11,8 @@ import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { Modal, Input } from '@/components/ui'
-import CategoryFilters from '@/components/CategoryFilters'
-import type { Listing } from '@/types'
+import SearchFilters from '@/components/SearchFilters'
+import type { Listing, ListingAmenities } from '@/types'
 
 export default function SearchPage() {
   const { user } = useAuth()
@@ -32,6 +32,12 @@ export default function SearchPage() {
   })
 
   useEffect(() => {
+    if (!user) {
+      router.push('/login')
+    }
+  }, [user, router])
+
+  useEffect(() => {
     fetchListings()
   }, [searchParams])
 
@@ -43,6 +49,11 @@ export default function SearchPage() {
       const lng = searchParams.get('lng')
       const filter = searchParams.get('filter')
       const startDate = searchParams.get('startDate')
+      const amenitiesParam = searchParams.get('amenities')?.split(',').filter(Boolean) ?? []
+      const evChargerType = searchParams.get('evChargerType') ?? ''
+      const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : 0
+      const vehicleSize = searchParams.get('vehicleSize') ?? ''
+      const instantBookFilter = searchParams.get('instantBook') === 'true'
       const endDate = searchParams.get('endDate')
 
       let url = '/api/listings'
@@ -85,6 +96,56 @@ export default function SearchPage() {
               const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
               const distance = R * c
               return { ...listing, distance }
+            })
+          }
+
+          // Parse amenities helper
+          const parseAmenities = (a: string | undefined | null): ListingAmenities | null => {
+            if (!a) return null
+            try {
+              const parsed = typeof a === 'string' ? JSON.parse(a) : a
+              return parsed as ListingAmenities
+            } catch {
+              return null
+            }
+          }
+
+          // Apply amenity/price filters from SearchFilters
+          if (amenitiesParam.length > 0 || evChargerType || maxPrice > 0 || vehicleSize || instantBookFilter) {
+            filtered = filtered.filter((l: Listing) => {
+              const amenities = parseAmenities((l as any).amenities)
+              if (amenitiesParam.length > 0) {
+                for (const a of amenitiesParam) {
+                  const val = amenities?.[a as keyof ListingAmenities]
+                  if (a === 'evCharging') {
+                    if (!val) return false
+                  } else if (a === 'petFriendly') {
+                    if (!val) return false
+                  } else if (a === 'covered' || a === 'gated' || a === 'accessible24_7') {
+                    if (!val) return false
+                  }
+                }
+              }
+              if (evChargerType && amenitiesParam.includes('evCharging')) {
+                const listingType = amenities?.evChargerType
+                if (!listingType) return false
+                if (evChargerType === 'level1' && listingType !== 'level1') return false
+                if (evChargerType === 'level2' && listingType !== 'level2') return false
+                if (evChargerType === 'tesla' && listingType !== 'tesla') return false
+              }
+              if (maxPrice > 0 && l.pricePerHour > maxPrice) return false
+              if (vehicleSize) {
+                const accommodates: Record<string, string[]> = {
+                  sedan: ['Sedan', 'SUV', 'Truck', 'Van'],
+                  suv: ['SUV', 'Truck', 'Van'],
+                  truck: ['Truck', 'Van'],
+                  van: ['Van'],
+                }
+                const allowed = accommodates[vehicleSize.toLowerCase()]
+                if (!allowed || !l.maxVehicleSize || !allowed.includes(l.maxVehicleSize)) return false
+              }
+              if (instantBookFilter && !(l as any).instantBook) return false
+              return true
             })
           }
 
@@ -134,7 +195,6 @@ export default function SearchPage() {
   }
 
   if (!user) {
-    router.push('/login')
     return null
   }
 
@@ -187,7 +247,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <CategoryFilters />
+      <SearchFilters />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Search Bar */}
         <div className="mb-8">
@@ -399,6 +459,7 @@ export default function SearchPage() {
               </div>
             </div>
           )}
+        </Modal>
       </div>
     </div>
   )
