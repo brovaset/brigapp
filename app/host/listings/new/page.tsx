@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { Input, Textarea, Select, ErrorMessage, LoadingSpinner } from '@/components/ui'
+import { parseResponseJson } from '@/lib/utils'
 import type { ListingFormData } from '@/types'
 
 export default function NewListingPage() {
@@ -116,10 +117,10 @@ export default function NewListingPage() {
         }),
       })
 
-      const data = await res.json()
+      const data = await parseResponseJson<{ error?: string }>(res)
 
       if (!res.ok) {
-        setError(data.error || 'Failed to create listing')
+        setError(data?.error || 'Failed to create listing')
         return
       }
 
@@ -376,6 +377,56 @@ export default function NewListingPage() {
                   rows={3}
                   placeholder="e.g., Gate code is 1234, park in the right side of driveway..."
                   helperText="Help drivers find and access your parking space"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.85 }}
+              >
+                <label className="block text-sm font-medium text-gray-700 mb-2">Listing photos</label>
+                <p className="text-xs text-gray-500 mb-2">Upload images of your parking space (JPEG, PNG, WebP, GIF — max 5MB each)</p>
+                <div className="flex flex-wrap gap-3 mb-2">
+                  {formData.photos.map((url, i) => (
+                    <div key={url} className="relative group">
+                      <img src={url} alt="" className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, j) => j !== i) })}
+                        className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Remove photo"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-car-neon/10 file:text-car-neon hover:file:bg-car-neon/20"
+                  onChange={async (e) => {
+                    const files = e.target.files
+                    if (!files?.length) return
+                    const urls: string[] = []
+                    for (let i = 0; i < files.length; i++) {
+                      const fd = new FormData()
+                      fd.append('type', 'listing')
+                      fd.append('file', files[i])
+                      try {
+                        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+                        const data = await parseResponseJson<{ url?: string; urls?: string[] }>(res)
+                        if (res.ok && data?.url) urls.push(data.url)
+                        else if (res.ok && data?.urls) urls.push(...data.urls)
+                      } catch {
+                        setError('Failed to upload an image')
+                      }
+                    }
+                    if (urls.length) setFormData({ ...formData, photos: [...formData.photos, ...urls] })
+                    e.target.value = ''
+                  }}
                 />
               </motion.div>
 

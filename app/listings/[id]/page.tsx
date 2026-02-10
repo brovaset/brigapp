@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
-import { formatCurrency, calculateBookingPrice } from '@/lib/utils'
+import { formatCurrency, calculateBookingPrice, parseResponseJson } from '@/lib/utils'
 import NeonButton from '@/components/NeonButton'
 import { Input, ErrorMessage } from '@/components/ui'
 import { motion } from 'framer-motion'
@@ -45,7 +45,7 @@ export default function ListingDetailPage() {
   const fetchListing = async () => {
     try {
       const res = await fetch(`/api/listings/${params.id}`)
-      const data = await res.json()
+      const data = await parseResponseJson(res)
 
       if (!res.ok) {
         setListing(null)
@@ -83,10 +83,10 @@ export default function ListingDetailPage() {
         }),
       })
 
-      const data = await res.json()
+      const data = await parseResponseJson<{ booking?: { id: string }; error?: string }>(res)
 
       if (!res.ok) {
-        setError(data.error || 'Booking failed')
+        setError(data?.error || 'Booking failed')
         return
       }
 

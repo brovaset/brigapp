@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { LoadingSpinner, Modal, ErrorMessage } from '@/components/ui'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import type { Listing } from '@/types'
 
 export default function HostListingsPage() {
@@ -31,9 +31,9 @@ export default function HostListingsPage() {
   const fetchListings = async () => {
     try {
       const res = await fetch('/api/listings')
-      const data = await res.json()
+      const data = await parseResponseJson<{ listings?: Listing[] }>(res)
 
-      if (data.listings) {
+      if (data?.listings) {
         // Filter to only show user's listings
         const myListings = data.listings.filter(
           (l: Listing) => l.host?.id === user?.userId || l.hostId === user?.userId
@@ -55,8 +55,8 @@ export default function HostListingsPage() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || 'Failed to delete listing')
+        const data = await parseResponseJson<{ error?: string }>(res)
+        setError(data?.error || 'Failed to delete listing')
         return
       }
 
@@ -77,8 +77,8 @@ export default function HostListingsPage() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || 'Failed to update listing')
+        const data = await parseResponseJson<{ error?: string }>(res)
+        setError(data?.error || 'Failed to update listing')
         return
       }
 

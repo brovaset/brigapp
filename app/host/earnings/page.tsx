@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
@@ -25,7 +25,7 @@ export default function EarningsPage() {
   const fetchEarnings = async () => {
     try {
       const res = await fetch('/api/host/earnings')
-      const data = await res.json()
+      const data = await parseResponseJson(res)
       if (res.ok) {
         setEarnings(data)
       }

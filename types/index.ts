@@ -6,6 +6,7 @@ export interface User {
   lastName: string
   role: 'DRIVER' | 'HOST' | 'BOTH'
   phone?: string | null
+  profileImageUrl?: string | null
 }
 
 export interface AuthUser {

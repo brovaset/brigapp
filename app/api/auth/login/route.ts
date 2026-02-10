@@ -81,8 +81,17 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Login error:', error)
+    const isDbError =
+      error && typeof error === 'object' && (
+        'code' in error ||
+        (typeof (error as Error).message === 'string' && ((error as Error).message.includes('database') || (error as Error).message.includes('Prisma') || (error as Error).message.includes('SQLite')))
+      )
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: isDbError
+          ? 'Database not available. Run: npx prisma generate && npx prisma db push'
+          : 'Internal server error',
+      },
       { status: 500 }
     )
   }

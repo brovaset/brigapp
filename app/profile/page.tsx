@@ -7,13 +7,15 @@ import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { Input, Select, ErrorMessage, SuccessMessage, LoadingSpinner } from '@/components/ui'
+import { parseResponseJson } from '@/lib/utils'
 import type { User } from '@/types'
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth()
+  const { user, logout, refreshUser } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [profileData, setProfileData] = useState<Partial<User>>({
@@ -22,6 +24,7 @@ export default function ProfilePage() {
     email: '',
     phone: '',
     role: 'BOTH',
+    profileImageUrl: null,
   })
 
   useEffect(() => {
@@ -36,15 +39,16 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       const res = await fetch('/api/auth/me')
-      const data = await res.json()
+      const data = await parseResponseJson<{ user?: Partial<User> }>(res)
 
-      if (data.user) {
+      if (data?.user) {
         setProfileData({
           firstName: data.user.firstName || '',
           lastName: data.user.lastName || '',
           email: data.user.email || '',
           phone: data.user.phone || '',
           role: data.user.role || 'BOTH',
+          profileImageUrl: data.user.profileImageUrl ?? null,
         })
       }
     } catch (error) {
@@ -62,14 +66,66 @@ export default function ProfilePage() {
     setSuccess('')
 
     try {
-      // Note: You'll need to create a PATCH /api/auth/me endpoint for updating profile
-      // For now, we'll show a success message
+      const res = await fetch('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phone: profileData.phone || null,
+          role: profileData.role,
+          profileImageUrl: profileData.profileImageUrl ?? null,
+        }),
+      })
+      const data = await parseResponseJson<{ user?: User; error?: string }>(res)
+      if (!res.ok) {
+        setError(data?.error || 'Failed to update profile')
+        return
+      }
+      if (data?.user) {
+        setProfileData((prev) => ({ ...prev, ...data.user }))
+        await refreshUser()
+      }
       setSuccess('Profile updated successfully!')
       setTimeout(() => setSuccess(''), 3000)
-    } catch (error) {
+    } catch {
       setError('Failed to update profile')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImage(true)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('type', 'profile')
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await parseResponseJson<{ url?: string; error?: string }>(res)
+      if (!res.ok) {
+        setError(data?.error || 'Failed to upload image')
+        return
+      }
+      if (data?.url) {
+        setProfileData((prev) => ({ ...prev, profileImageUrl: data.url }))
+        const patchRes = await fetch('/api/auth/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileImageUrl: data.url }),
+        })
+        if (patchRes.ok) await refreshUser()
+        setSuccess('Profile photo updated!')
+        setTimeout(() => setSuccess(''), 3000)
+      }
+    } catch {
+      setError('Failed to upload image')
+    } finally {
+      setUploadingImage(false)
+      e.target.value = ''
     }
   }
 
@@ -116,6 +172,39 @@ export default function ProfilePage() {
           {/* Profile Information */}
           <FloatingCard delay={0}>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Personal Information</h2>
+
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
+              <div className="relative">
+                {profileData.profileImageUrl ? (
+                  <img
+                    src={profileData.profileImageUrl}
+                    alt="Profile"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-car-neon to-car-electric flex items-center justify-center text-white text-2xl font-semibold">
+                    {profileData.firstName?.[0]?.toUpperCase() || profileData.email?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
+                {uploadingImage && (
+                  <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Profile photo</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="block w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-car-neon/10 file:text-car-neon hover:file:bg-car-neon/20"
+                  onChange={handleProfileImageChange}
+                  disabled={uploadingImage}
+                />
+                <p className="text-xs text-gray-500 mt-1">JPEG, PNG, WebP or GIF. Max 5MB.</p>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <motion.div

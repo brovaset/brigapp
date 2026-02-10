@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
@@ -41,7 +41,7 @@ export default function ListingDetailPage() {
   const fetchListing = async () => {
     try {
       const res = await fetch(`/api/listings/${params.id}`)
-      const data = await res.json()
+      const data = await parseResponseJson(res)
       if (res.ok && data) {
         setListing(data)
       } else {
@@ -58,8 +58,8 @@ export default function ListingDetailPage() {
   const fetchBlockedDates = async () => {
     try {
       const res = await fetch(`/api/listings/${params.id}/blocked-dates`)
-      const data = await res.json()
-      if (data.blockedDates) {
+      const data = await parseResponseJson<{ blockedDates?: BlockedDate[] }>(res)
+      if (data?.blockedDates) {
         setBlockedDates(data.blockedDates)
       }
     } catch (error) {
@@ -80,10 +80,10 @@ export default function ListingDetailPage() {
         body: JSON.stringify(blockForm),
       })
 
-      const data = await res.json()
+      const data = await parseResponseJson<{ error?: string }>(res)
 
       if (!res.ok) {
-        alert(data.error || 'Failed to block dates')
+        alert(data?.error || 'Failed to block dates')
         return
       }
 

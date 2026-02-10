@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
-import { calculateDistance } from '@/lib/utils'
+import { calculateDistance, parseResponseJson } from '@/lib/utils'
 
 interface Listing {
   id: string
@@ -132,9 +132,9 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
   const loadListings = async (lat: number, lng: number, mapInstance?: google.maps.Map) => {
     try {
       const res = await fetch(`/api/listings?lat=${lat}&lng=${lng}&radius=5`)
-      const data = await res.json()
+      const data = await parseResponseJson<{ listings?: Listing[] }>(res)
 
-      if (data.listings) {
+      if (data?.listings) {
         // Calculate distances for each listing
         const listingsWithDistance = data.listings.map((listing: Listing) => {
           const distance = calculateDistance(lat, lng, listing.latitude, listing.longitude)

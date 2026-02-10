@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthProvider'
 import SearchBar from '@/components/SearchBar'
 import ListingCard from '@/components/ListingCard'
 import Logo from '@/components/Logo'
+import { parseResponseJson } from '@/lib/utils'
 import type { Listing } from '@/types'
 
 export default function Home() {
@@ -28,8 +29,8 @@ export default function Home() {
   const fetchFeaturedListings = async () => {
     try {
       const res = await fetch('/api/listings?limit=12')
-      const data = await res.json()
-      if (data.listings) {
+      const data = await parseResponseJson<{ listings?: Listing[] }>(res)
+      if (data?.listings) {
         setListings(data.listings.slice(0, 12))
       }
     } catch (error) {

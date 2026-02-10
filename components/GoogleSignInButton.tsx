@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
+import { parseResponseJson } from '@/lib/utils'
 
 declare global {
   interface Window {
@@ -71,10 +72,10 @@ export default function GoogleSignInButton({ onError, redirectTo = '/dashboard' 
               body: JSON.stringify({ credential: response.credential }),
             })
 
-            const data = await res.json()
+            const data = await parseResponseJson<{ token?: string; error?: string }>(res)
 
             if (!res.ok) {
-              onError?.(data.error || 'Google sign-in failed')
+              onError?.(data?.error || 'Google sign-in failed')
               return
             }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import AnimatedBackground from '@/components/AnimatedBackground'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
@@ -35,10 +35,10 @@ export default function BookingDetailsPage() {
   const fetchBooking = async () => {
     try {
       const res = await fetch(`/api/bookings/${params.id}`)
-      const data = await res.json()
+      const data = await parseResponseJson<{ booking?: unknown; error?: string }>(res)
 
       if (!res.ok) {
-        alert(data.error || 'Booking not found')
+        alert(data?.error || 'Booking not found')
         router.push('/dashboard')
         return
       }
@@ -100,10 +100,10 @@ export default function BookingDetailsPage() {
         }),
       })
 
-      const data = await res.json()
+      const data = await parseResponseJson<{ error?: string }>(res)
 
       if (!res.ok) {
-        alert(data.error || 'Failed to extend booking')
+        alert(data?.error || 'Failed to extend booking')
         return
       }
 

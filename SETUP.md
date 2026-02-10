@@ -34,8 +34,11 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 2. **Google Sign-In (OAuth):**
    - In Google Cloud Console, go to APIs & Services > Credentials
    - Create OAuth 2.0 Client ID (Web application)
-   - Add `http://localhost:3000` to Authorized JavaScript origins (add your production URL for deploy)
+   - **Important:** Add your app URLs to **Authorized JavaScript origins**:
+     - `http://localhost:3000` (local dev — no trailing slash)
+     - Your production URL (e.g. `https://your-app.vercel.app`) for deploy
    - Add both `GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to `.env` (same value)
+   - **Getting "Error 400: origin_mismatch"?** See [GOOGLE_OAUTH_FIX.md](./GOOGLE_OAUTH_FIX.md)
 
 3. **Stripe Keys:**
    - Sign up at [Stripe](https://stripe.com)

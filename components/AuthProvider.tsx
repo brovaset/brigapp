@@ -6,6 +6,9 @@ interface User {
   userId: string
   email: string
   role: string
+  firstName?: string
+  lastName?: string
+  profileImageUrl?: string | null
 }
 
 interface AuthContextType {
@@ -13,6 +16,7 @@ interface AuthContextType {
   loading: boolean
   login: (token: string) => void
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,18 +37,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetch('/api/auth/me', {
           credentials: 'include',
         })
-          .then(res => {
+          .then(async res => {
+            const text = await res.text()
             if (!res.ok) {
               throw new Error('Failed to fetch user')
             }
-            return res.json()
+            // Avoid parsing HTML as JSON (e.g. error pages or redirects)
+            const trimmed = text.trim()
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+              return JSON.parse(text) as { user?: { id: string; email: string; role: string; firstName?: string; lastName?: string; profileImageUrl?: string | null } }
+            }
+            throw new Error('Invalid response')
           })
           .then(data => {
-            if (data.user) {
+            if (data?.user) {
               setUser({
                 userId: data.user.id,
                 email: data.user.email,
                 role: data.user.role,
+                firstName: data.user.firstName,
+                lastName: data.user.lastName,
+                profileImageUrl: data.user.profileImageUrl,
               })
             }
           })
@@ -68,18 +81,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetch('/api/auth/me', {
       credentials: 'include',
     })
-      .then(res => {
+      .then(async res => {
+        const text = await res.text()
         if (!res.ok) {
           throw new Error('Failed to fetch user')
         }
-        return res.json()
+        const trimmed = text.trim()
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          return JSON.parse(text) as { user?: { id: string; email: string; role: string; firstName?: string; lastName?: string; profileImageUrl?: string | null } }
+        }
+        throw new Error('Invalid response')
       })
       .then(data => {
-        if (data.user) {
+        if (data?.user) {
           setUser({
             userId: data.user.id,
             email: data.user.email,
             role: data.user.role,
+            firstName: data.user.firstName,
+            lastName: data.user.lastName,
+            profileImageUrl: data.user.profileImageUrl,
           })
         }
       })
@@ -93,8 +114,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  const refreshUser = async () => {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' })
+      const text = await res.text()
+      if (!res.ok || !text.trim().startsWith('{')) return
+      const data = JSON.parse(text) as { user?: { id: string; email: string; role: string; firstName?: string; lastName?: string; profileImageUrl?: string | null } }
+      if (data?.user) {
+        setUser({
+          userId: data.user.id,
+          email: data.user.email,
+          role: data.user.role,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          profileImageUrl: data.user.profileImageUrl,
+        })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

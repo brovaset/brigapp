@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
@@ -164,8 +164,8 @@ function BookingsList() {
   const fetchBookings = async () => {
     try {
       const res = await fetch('/api/bookings')
-      const data = await res.json()
-      if (data.bookings) {
+      const data = await parseResponseJson<{ bookings?: unknown[] }>(res)
+      if (data?.bookings) {
         setBookings(data.bookings)
       }
     } catch (error) {

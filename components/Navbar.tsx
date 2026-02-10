@@ -67,9 +67,17 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-300 hover:border-car-neon hover:shadow-md transition-all bg-white"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-car-neon to-car-electric flex items-center justify-center text-white font-semibold shadow-sm">
-                      {user.firstName?.[0]?.toUpperCase() || 'U'}
-                    </div>
+                    {user.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt=""
+                        className="w-8 h-8 rounded-full object-cover shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-car-neon to-car-electric flex items-center justify-center text-white font-semibold shadow-sm">
+                        {user.firstName?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                    )}
                     {user.firstName && (
                       <span className="text-sm font-medium text-gray-700 hidden lg:inline">
                         {user.firstName}

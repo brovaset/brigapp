@@ -11,16 +11,17 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String?   // Optional for Google OAuth users
-  googleId      String?   @unique // Google OAuth sub
-  firstName     String
-  lastName      String
-  phone         String?
-  role          String    @default("BOTH") // DRIVER, HOST, or BOTH
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  email            String    @unique
+  password         String?   // Optional for Google OAuth users
+  googleId         String?   @unique // Google OAuth sub
+  firstName        String
+  lastName         String
+  phone            String?
+  role             String    @default("BOTH") // DRIVER, HOST, or BOTH
+  profileImageUrl  String?   // Profile/avatar image URL
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Host fields
   stripeAccountId String?

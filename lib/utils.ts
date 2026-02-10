@@ -44,3 +44,20 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
+/**
+ * Safely parse a Response body as JSON. Avoids "Unexpected token '<'" when the
+ * server returns HTML (e.g. error page or redirect) instead of JSON.
+ */
+export async function parseResponseJson<T = unknown>(res: Response): Promise<T> {
+  const text = await res.text()
+  const trimmed = text.trim()
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      return JSON.parse(text) as T
+    } catch {
+      throw new Error('Invalid JSON in response')
+    }
+  }
+  throw new Error(res.ok ? 'Response is not JSON' : `Request failed: ${res.status}`)
+}
+

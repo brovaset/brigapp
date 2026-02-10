@@ -6,7 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import MapSearch from '@/components/MapSearch'
 import ListingCard from '@/components/ListingCard'
 import SearchBar from '@/components/SearchBar'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
@@ -74,9 +74,9 @@ export default function SearchPage() {
       }
 
       const res = await fetch(url)
-      const data = await res.json()
-      
-        if (data.listings) {
+      const data = await parseResponseJson<{ listings?: Listing[] }>(res)
+
+        if (data?.listings) {
           let filtered = data.listings
 
           // Calculate distances if lat/lng provided
@@ -216,10 +216,10 @@ export default function SearchPage() {
         }),
       })
 
-      const data = await res.json()
+      const data = await parseResponseJson<{ booking?: { id: string }; error?: string }>(res)
 
       if (!res.ok) {
-        alert(data.error || 'Booking failed')
+        alert(data?.error || 'Booking failed')
         return
       }
 

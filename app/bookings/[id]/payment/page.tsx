@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import StripePaymentForm from '@/components/StripePaymentForm'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 
 export default function PaymentPage() {
   const params = useParams()
@@ -17,10 +17,10 @@ export default function PaymentPage() {
     const fetchBooking = async () => {
       try {
         const res = await fetch(`/api/bookings/${params.id}`)
-        const data = await res.json()
+        const data = await parseResponseJson<{ booking?: unknown; error?: string }>(res)
 
         if (!res.ok) {
-          setError(data.error || 'Booking not found')
+          setError(data?.error || 'Booking not found')
           return
         }
 
@@ -47,10 +47,10 @@ export default function PaymentPage() {
           body: JSON.stringify({ bookingId: booking.id }),
         })
 
-        const data = await res.json()
+        const data = await parseResponseJson<{ clientSecret?: string; error?: string }>(res)
 
         if (!res.ok) {
-          setError(data.error || 'Payment setup failed')
+          setError(data?.error || 'Payment setup failed')
           return
         }
 

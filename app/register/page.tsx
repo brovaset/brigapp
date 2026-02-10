@@ -10,6 +10,7 @@ import NeonButton from '@/components/NeonButton'
 import Logo from '@/components/Logo'
 import { Input, Select, ErrorMessage, LoadingSpinner } from '@/components/ui'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
+import { parseResponseJson } from '@/lib/utils'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -38,10 +39,10 @@ export default function RegisterPage() {
         body: JSON.stringify(formData),
       })
 
-      const data = await res.json()
+      const data = await parseResponseJson<{ token?: string; error?: string }>(res)
 
       if (!res.ok) {
-        setError(data.error || 'Registration failed')
+        setError(data?.error || 'Registration failed')
         return
       }
 

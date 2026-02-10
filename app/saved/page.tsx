@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { motion } from 'framer-motion'
 import ListingCard from '@/components/ListingCard'
 import { LoadingSpinner } from '@/components/ui'
+import { parseResponseJson } from '@/lib/utils'
 import type { Listing } from '@/types'
 
 export default function SavedPage() {
@@ -25,8 +27,8 @@ export default function SavedPage() {
   const fetchSavedListings = async () => {
     try {
       const res = await fetch('/api/saved')
-      const data = await res.json()
-      if (res.ok && data.listings) {
+      const data = await parseResponseJson<{ listings?: Listing[] }>(res)
+      if (res.ok && data?.listings) {
         setSavedListings(data.listings)
       }
     } catch (error) {

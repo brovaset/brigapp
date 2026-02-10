@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import { useAuth } from '@/components/AuthProvider'
 import type { Listing } from '@/types'
 
@@ -34,8 +34,12 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
   useEffect(() => {
     if (user) {
       fetch(`/api/saved?listingId=${listing.id}`)
-        .then((r) => r.json())
-        .then((d) => setIsFavorite(d.saved))
+        .then(async (r) => {
+          try {
+            const d = await parseResponseJson<{ saved?: boolean }>(r)
+            setIsFavorite(!!d?.saved)
+          } catch {}
+        })
         .catch(() => {})
     } else {
       const saved = localStorage.getItem('savedListings')
