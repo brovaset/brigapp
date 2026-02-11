@@ -51,14 +51,7 @@ function PaymentForm({ clientSecret, amount, bookingId, onSuccess, onError }: St
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement
-        options={{
-          layout: 'tabs',
-          defaultCollapsed: false,
-          radios: true,
-          spacedAccordionItems: false,
-        }}
-      />
+      <PaymentElement options={{ layout: 'tabs' }} />
       <button
         type="submit"
         disabled={!stripe || loading}
@@ -99,7 +92,6 @@ export default function StripePaymentFormWrapper({
       variables: {
         colorPrimary: '#007aff',
         colorBackground: '#ffffff',
-        textColor: '#1a1a1a',
         colorDanger: '#ff3b30',
         fontFamily: 'Inter, system-ui, sans-serif',
         borderRadius: '8px',

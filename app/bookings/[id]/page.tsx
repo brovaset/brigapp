@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency, parseResponseJson } from '@/lib/utils'
+import type { Booking } from '@/types'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
@@ -38,7 +39,7 @@ export default function BookingDetailsPage() {
   const fetchBooking = async () => {
     try {
       const res = await fetch(`/api/bookings/${params.id}`)
-      const data = await parseResponseJson<{ booking?: unknown; error?: string }>(res)
+      const data = await parseResponseJson<{ booking?: Booking; error?: string }>(res)
 
       if (!res.ok) {
         alert(data?.error || 'Booking not found')
@@ -48,7 +49,7 @@ export default function BookingDetailsPage() {
 
       setBooking(data.booking)
       // Check if rating already exists
-      if (data.booking.driverRating || data.booking.hostRating) {
+      if (data.booking?.driverRating || data.booking?.hostRating) {
         setShowRating(false)
       }
     } catch (error) {

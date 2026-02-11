@@ -46,7 +46,7 @@ export default function ListingDetailPage() {
   const fetchListing = async () => {
     try {
       const res = await fetch(`/api/listings/${params.id}`)
-      const data = await parseResponseJson(res)
+      const data = await parseResponseJson<Listing>(res)
 
       if (!res.ok) {
         setListing(null)

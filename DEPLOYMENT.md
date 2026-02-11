@@ -147,3 +147,12 @@ Consider setting up:
 - Check Node.js version matches (18+)
 - Review build logs for specific errors
 
+### Muting workflow failure emails (GitHub)
+If you want to stop receiving email when the Deploy workflow fails, without changing the workflow or the project:
+
+1. On GitHub.com, go to your profile (top right) → **Settings**.
+2. In the left sidebar, open **Notifications**.
+3. Under **Actions**, turn off email for workflow runs, or use **Custom** and disable "Failed workflow runs" (or similar). Exact labels may vary by GitHub UI.
+
+The workflow will still run and deploy as before; you just won’t get failure emails.
+

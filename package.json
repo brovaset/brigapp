@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "pytest tests/api -v -m api",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/google.maps": "^3.58.1",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "20.19.27",
     "@types/react": "^18.2.46",

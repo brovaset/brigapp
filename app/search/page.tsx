@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
-import MapSearch from '@/components/MapSearch'
+import MapSearch, { type MapSearchListing } from '@/components/MapSearch'
 import ListingCard from '@/components/ListingCard'
 import SearchBar from '@/components/SearchBar'
 import { formatCurrency, parseResponseJson, US_STATES } from '@/lib/utils'
@@ -197,8 +197,8 @@ export default function SearchPage() {
     return null
   }
 
-  const handleListingSelect = (listing: Listing) => {
-    setSelectedListing(listing)
+  const handleListingSelect = (listing: MapSearchListing) => {
+    setSelectedListing(listing as Listing)
     setShowBookingForm(true)
   }
 

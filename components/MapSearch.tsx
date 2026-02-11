@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
 import { calculateDistance, parseResponseJson } from '@/lib/utils'
 
-interface Listing {
+export interface MapSearchListing {
   id: string
   title: string
   address: string
@@ -19,13 +19,13 @@ interface Listing {
 }
 
 interface MapSearchProps {
-  onListingSelect: (listing: Listing) => void
+  onListingSelect: (listing: MapSearchListing) => void
   userLocation?: { lat: number; lng: number }
 }
 
 export default function MapSearch({ onListingSelect, userLocation }: MapSearchProps) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const [listings, setListings] = useState<Listing[]>([])
+  const [listings, setListings] = useState<MapSearchListing[]>([])
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   const [userMarker, setUserMarker] = useState<google.maps.Marker | null>(null)
@@ -132,14 +132,14 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
   const loadListings = async (lat: number, lng: number, mapInstance?: google.maps.Map) => {
     try {
       const res = await fetch(`/api/listings?lat=${lat}&lng=${lng}&radius=5`)
-      const data = await parseResponseJson<{ listings?: Listing[] }>(res)
+      const data = await parseResponseJson<{ listings?: MapSearchListing[] }>(res)
 
       if (data?.listings) {
         // Calculate distances for each listing
-        const listingsWithDistance = data.listings.map((listing: Listing) => {
+        const listingsWithDistance = data.listings.map((listing: MapSearchListing) => {
           const distance = calculateDistance(lat, lng, listing.latitude, listing.longitude)
           return { ...listing, distance }
-        }).sort((a: Listing, b: Listing) => (a.distance || 0) - (b.distance || 0))
+        }).sort((a: MapSearchListing, b: MapSearchListing) => (a.distance || 0) - (b.distance || 0))
 
         setListings(listingsWithDistance)
         updateMarkers(listingsWithDistance, mapInstance || map)
@@ -232,7 +232,7 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
     setTrackingEnabled(false)
   }
 
-  const updateMarkers = (listingsData: Listing[], mapInstance: google.maps.Map) => {
+  const updateMarkers = (listingsData: MapSearchListing[], mapInstance: google.maps.Map) => {
     if (!mapInstance) return
 
     // Clear existing markers

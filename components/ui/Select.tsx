@@ -12,7 +12,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
   helperText?: string
-  options: SelectOption[]
+  options: readonly SelectOption[]
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
