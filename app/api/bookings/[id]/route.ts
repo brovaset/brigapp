@@ -6,9 +6,10 @@ import { validateBookingDates } from '@/lib/validation'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession()
 
     if (!session) {
@@ -16,7 +17,7 @@ export async function GET(
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         listing: true,
         driver: {
@@ -78,9 +79,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession()
 
     if (!session) {
@@ -88,7 +90,7 @@ export async function PATCH(
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!booking) {
@@ -140,7 +142,7 @@ export async function PATCH(
       )
 
       const updatedBooking = await prisma.booking.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           endTime: newEndTime,
           totalAmount: newTotalAmount,
@@ -153,7 +155,7 @@ export async function PATCH(
     // Allow status updates
     if (status) {
       const updatedBooking = await prisma.booking.update({
-        where: { id: params.id },
+        where: { id },
         data: { status },
       })
 

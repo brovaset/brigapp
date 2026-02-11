@@ -70,6 +70,7 @@ export interface Booking {
   vehicleMake: string
   vehicleModel: string
   licensePlate: string
+  licensePlateState?: string | null
   totalAmount: number
   status: BookingStatus
   createdAt: string
@@ -200,6 +201,7 @@ export interface BookingFormData {
   vehicleMake: string
   vehicleModel: string
   licensePlate: string
+  licensePlateState?: string
 }
 
 export interface ListingFormData {

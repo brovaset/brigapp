@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
       vehicleMake,
       vehicleModel,
       licensePlate,
+      licensePlateState,
     } = body
 
     if (
@@ -195,6 +196,12 @@ export async function POST(request: NextRequest) {
       listing.pricePerDay
     )
 
+    // Sanitize license plate state (optional)
+    const sanitizedState =
+      licensePlateState && typeof licensePlateState === 'string'
+        ? licensePlateState.trim().toUpperCase().slice(0, 2)
+        : null
+
     // Create booking
     const booking = await prisma.booking.create({
       data: {
@@ -206,6 +213,7 @@ export async function POST(request: NextRequest) {
         vehicleMake: sanitizedMake,
         vehicleModel: sanitizedModel,
         licensePlate: sanitizedPlate,
+        licensePlateState: sanitizedState || undefined,
         totalAmount,
         status: 'PENDING',
       },

@@ -6,11 +6,11 @@ import { useAuth } from '@/components/AuthProvider'
 import MapSearch from '@/components/MapSearch'
 import ListingCard from '@/components/ListingCard'
 import SearchBar from '@/components/SearchBar'
-import { formatCurrency, parseResponseJson } from '@/lib/utils'
+import { formatCurrency, parseResponseJson, US_STATES } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
-import { Modal, Input } from '@/components/ui'
+import { Modal, Input, Select } from '@/components/ui'
 import SearchFilters from '@/components/SearchFilters'
 import type { Listing, ListingAmenities } from '@/types'
 
@@ -29,6 +29,7 @@ export default function SearchPage() {
     vehicleMake: '',
     vehicleModel: '',
     licensePlate: '',
+    licensePlateState: '',
   })
 
   useEffect(() => {
@@ -447,6 +448,13 @@ export default function SearchPage() {
                 value={bookingData.licensePlate}
                 onChange={(e) => setBookingData({ ...bookingData, licensePlate: e.target.value })}
                 placeholder="e.g., ABC-1234"
+              />
+
+              <Select
+                label="License plate state"
+                options={US_STATES}
+                value={bookingData.licensePlateState}
+                onChange={(e) => setBookingData({ ...bookingData, licensePlateState: e.target.value })}
               />
 
               <div className="pt-4 border-t border-gray-200">

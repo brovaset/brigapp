@@ -252,7 +252,9 @@ function BookingsList() {
                 <p className="text-gray-900">
                   {booking.vehicleMake} {booking.vehicleModel}
                 </p>
-                <p className="text-xs text-gray-500">Plate: {booking.licensePlate}</p>
+                <p className="text-xs text-gray-500">
+                  Plate: {booking.licensePlate}{booking.licensePlateState ? ` (${booking.licensePlateState})` : ''}
+                </p>
               </div>
               <div>
                 <p className="text-gray-500">Amount</p>

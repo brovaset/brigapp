@@ -179,7 +179,7 @@ export default function BookingDetailsPage() {
 
   const verifyLicensePlate = () => {
     const enteredPlate = prompt(
-      `Enter the license plate to verify:\nExpected: ${booking.licensePlate}`
+      `Enter the license plate to verify:\nExpected: ${booking.licensePlate}${booking.licensePlateState ? ` (${booking.licensePlateState})` : ''}`
     )
     
     if (enteredPlate?.toUpperCase().trim() === booking.licensePlate.toUpperCase().trim()) {
@@ -283,7 +283,9 @@ export default function BookingDetailsPage() {
                 {booking.vehicleMake} {booking.vehicleModel}
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <p className="text-sm text-gray-300">License: {booking.licensePlate}</p>
+                <p className="text-sm text-gray-300">
+                  License: {booking.licensePlate}{booking.licensePlateState ? ` (${booking.licensePlateState})` : ''}
+                </p>
                 {isHost && booking.status === 'ACTIVE' && (
                   <button
                     onClick={verifyLicensePlate}

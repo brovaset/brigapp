@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const listing = await prisma.listing.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         host: {
           select: {
@@ -59,9 +60,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession()
 
     if (!session) {
@@ -69,7 +71,7 @@ export async function PUT(
     }
 
     const listing = await prisma.listing.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!listing) {
@@ -85,7 +87,7 @@ export async function PUT(
 
     const body = await request.json()
     const updatedListing = await prisma.listing.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
     })
 

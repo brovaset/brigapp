@@ -5,9 +5,10 @@ import { prisma } from '@/lib/prisma'
 // GET messages for a booking
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookingId: string } }
+  { params }: { params: Promise<{ bookingId: string }> }
 ) {
   try {
+    const { bookingId } = await params
     const session = await getServerSession()
 
     if (!session) {
@@ -15,7 +16,7 @@ export async function GET(
     }
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.bookingId },
+      where: { id: bookingId },
     })
 
     if (!booking) {
@@ -30,7 +31,7 @@ export async function GET(
     }
 
     const messages = await prisma.message.findMany({
-      where: { bookingId: params.bookingId },
+      where: { bookingId },
       include: {
         sender: {
           select: {
@@ -46,7 +47,7 @@ export async function GET(
     // Mark messages as read
     await prisma.message.updateMany({
       where: {
-        bookingId: params.bookingId,
+        bookingId,
         receiverId: session.userId,
         isRead: false,
       },

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
-import { formatCurrency, calculateBookingPrice, parseResponseJson } from '@/lib/utils'
+import { formatCurrency, calculateBookingPrice, parseResponseJson, US_STATES } from '@/lib/utils'
 import NeonButton from '@/components/NeonButton'
-import { Input, ErrorMessage } from '@/components/ui'
+import { Input, Select, ErrorMessage } from '@/components/ui'
 import { motion } from 'framer-motion'
 import type { Listing } from '@/types'
 
@@ -34,6 +34,7 @@ export default function ListingDetailPage() {
     vehicleMake: '',
     vehicleModel: '',
     licensePlate: '',
+    licensePlateState: '',
   })
   const [booking, setBooking] = useState(false)
   const [error, setError] = useState('')
@@ -344,6 +345,12 @@ export default function ListingDetailPage() {
                   placeholder="e.g. ABC1234"
                   value={bookingData.licensePlate}
                   onChange={(e) => setBookingData({ ...bookingData, licensePlate: e.target.value })}
+                />
+                <Select
+                  label="License plate state"
+                  options={US_STATES}
+                  value={bookingData.licensePlateState}
+                  onChange={(e) => setBookingData({ ...bookingData, licensePlateState: e.target.value })}
                 />
 
                 {totalPrice > 0 && (

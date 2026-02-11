@@ -131,7 +131,9 @@ export default function PaymentPage() {
             <p className="font-semibold text-gray-900">
               {booking.vehicleMake} {booking.vehicleModel}
             </p>
-            <p className="text-sm text-gray-600">License: {booking.licensePlate}</p>
+            <p className="text-sm text-gray-600">
+              License: {booking.licensePlate}{booking.licensePlateState ? ` (${booking.licensePlateState})` : ''}
+            </p>
           </div>
 
           <div className="pt-4 border-t border-gray-200">

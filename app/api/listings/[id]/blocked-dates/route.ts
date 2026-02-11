@@ -5,11 +5,12 @@ import { prisma } from '@/lib/prisma'
 // GET blocked dates for a listing
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const blockedDates = await prisma.blockedDate.findMany({
-      where: { listingId: params.id },
+      where: { listingId: id },
       orderBy: { startDate: 'asc' },
     })
 
@@ -26,9 +27,10 @@ export async function GET(
 // POST - Create blocked date
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession()
 
     if (!session) {
@@ -36,7 +38,7 @@ export async function POST(
     }
 
     const listing = await prisma.listing.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!listing) {
@@ -63,7 +65,7 @@ export async function POST(
     // Check for conflicting bookings - optimized query
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
-        listingId: params.id,
+        listingId: id,
         status: {
           in: ['CONFIRMED', 'ACTIVE'],
         },
@@ -84,7 +86,7 @@ export async function POST(
 
     const blockedDate = await prisma.blockedDate.create({
       data: {
-        listingId: params.id,
+        listingId: id,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         reason,
@@ -104,7 +106,7 @@ export async function POST(
 // DELETE - Remove blocked date
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession()

@@ -31,6 +31,9 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
 # Stripe Webhook Secret (https://dashboard.stripe.com/webhooks)
 # Required for production; use Stripe CLI for local testing
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# Optional: Base URL for Stripe Connect redirects (defaults to request origin)
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
 ```
 
 ### Getting Your Keys
