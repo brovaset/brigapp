@@ -35,7 +35,6 @@ export default function NewListingPage() {
       evChargerType: '' as '' | 'level1' | 'level2' | 'tesla',
       gated: false,
       accessible24_7: false,
-      petFriendly: false,
     },
     instantBook: true,
     cancellationPolicy: 'FLEXIBLE',
@@ -451,7 +450,6 @@ export default function NewListingPage() {
                     },
                     { key: 'gated', label: 'Gated', desc: 'Secure access' },
                     { key: 'accessible24_7', label: '24/7 access', desc: 'Anytime' },
-                    { key: 'petFriendly', label: 'Pet friendly', desc: 'Pets allowed' },
                   ].map((item) => (
                     <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                       <input

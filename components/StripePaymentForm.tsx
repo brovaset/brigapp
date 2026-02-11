@@ -5,7 +5,8 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { loadStripe } from '@stripe/stripe-js'
 import type { StripeElementsOptions } from '@stripe/stripe-js'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 interface StripePaymentFormProps {
   clientSecret: string
@@ -84,6 +85,13 @@ export default function StripePaymentFormWrapper({
   onSuccess,
   onError,
 }: StripePaymentFormWrapperProps) {
+  if (!stripePromise) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+        Payment is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to enable payments.
+      </div>
+    )
+  }
   const options: StripeElementsOptions = {
     clientSecret,
     appearance: {

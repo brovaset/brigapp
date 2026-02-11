@@ -20,7 +20,6 @@ const AMENITY_PILLS = [
   { id: 'evCharging', label: 'EV Charger', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
   { id: 'gated', label: 'Gated', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
   { id: 'accessible24_7', label: '24/7 Access', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { id: 'petFriendly', label: 'Pet Friendly', icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
 ]
 
 const EV_CHARGER_TYPES = [

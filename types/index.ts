@@ -22,7 +22,6 @@ export interface ListingAmenities {
   evChargerType?: 'level1' | 'level2' | 'tesla'
   gated?: boolean
   accessible24_7?: boolean
-  petFriendly?: boolean
 }
 
 // Listing Types

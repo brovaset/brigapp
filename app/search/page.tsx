@@ -120,8 +120,6 @@ export default function SearchPage() {
                   const val = amenities?.[a as keyof ListingAmenities]
                   if (a === 'evCharging') {
                     if (!val) return false
-                  } else if (a === 'petFriendly') {
-                    if (!val) return false
                   } else if (a === 'covered' || a === 'gated' || a === 'accessible24_7') {
                     if (!val) return false
                   }
