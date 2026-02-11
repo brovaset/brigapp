@@ -21,6 +21,22 @@ jobs:
       - run: npm run lint
       - run: npx prisma generate
       - run: npm run build
+      - run: npm run test:unit
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Set up Python and install pytest (API tests only)
+        run: pip install -r requirements-api.txt
+      - name: Create test database and start server
+        run: |
+          npx prisma db push
+          npm run start &
+          sleep 15
+          pytest tests/api -v -m api --tb=short
+        env:
+          BRIGAP_BASE_URL: http://localhost:3000
+          DATABASE_URL: "file:./dev.db"
 
   deploy:
     needs: test

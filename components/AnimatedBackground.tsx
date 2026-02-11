@@ -44,7 +44,11 @@ export default function AnimatedBackground() {
     function animate() {
       if (!ctx || !canvas) return
 
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.1)'
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+      gradient.addColorStop(0, 'rgba(168, 85, 247, 0.12)')
+      gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.08)')
+      gradient.addColorStop(1, 'rgba(6, 182, 212, 0.12)')
+      ctx.fillStyle = gradient
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       particles.forEach((particle, i) => {

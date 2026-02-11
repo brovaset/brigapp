@@ -13,6 +13,12 @@ BRIGAP uses Stripe Connect Express so hosts can receive earnings and cash out to
 
 The same Stripe account used for payments is used for Connect. No extra env vars are required.
 
+**Important:** Stripe Connect must be enabled in your Stripe Dashboard before hosts can connect:
+
+1. Go to [Stripe Connect](https://dashboard.stripe.com/connect/accounts/overview)
+2. Click **Get started** if you haven't completed Connect setup
+3. Finish the Connect onboarding (platform profile, verification)
+
 Optional:
 
 ```env

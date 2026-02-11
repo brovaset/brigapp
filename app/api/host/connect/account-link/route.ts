@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
         country: 'US',
         email: user.email,
         capabilities: {
-          card_payments: { requested: false },
           transfers: { requested: true },
         },
         business_type: 'individual',
@@ -65,10 +64,19 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ url: accountLink.url })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Create account link error:', error)
+
+    const stripeError = error as { type?: string; message?: string; code?: string }
+    if (stripeError.type && stripeError.message) {
+      return NextResponse.json(
+        { error: stripeError.message },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to create account link' },
+      { error: 'Failed to create account link. Ensure Stripe Connect is enabled in your Stripe Dashboard.' },
       { status: 500 }
     )
   }

@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency, parseResponseJson } from '@/lib/utils'
-import AnimatedBackground from '@/components/AnimatedBackground'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
@@ -18,6 +17,10 @@ export default function BookingDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const attachInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const [extending, setExtending] = useState(false)
   const [newEndTime, setNewEndTime] = useState('')
   const [showRating, setShowRating] = useState(false)
@@ -56,7 +59,7 @@ export default function BookingDetailsPage() {
   }
 
   const sendMessage = async () => {
-    if (!message.trim()) return
+    if (!message.trim() && !imagePreview) return
 
     setSendingMessage(true)
     try {
@@ -65,22 +68,58 @@ export default function BookingDetailsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId: booking.id,
-          content: message,
+          content: message.trim() || '',
+          ...(imagePreview && { imageUrl: imagePreview }),
         }),
       })
 
       if (!res.ok) {
-        alert('Failed to send message')
+        const data = await parseResponseJson<{ error?: string }>(res)
+        alert(data?.error || 'Failed to send message')
         return
       }
 
       setMessage('')
+      setImagePreview(null)
       fetchBooking()
     } catch (error) {
       console.error('Error sending message:', error)
       alert('Failed to send message')
     } finally {
       setSendingMessage(false)
+    }
+  }
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image (JPEG, PNG, WebP, or GIF)')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be under 5MB')
+      return
+    }
+    setUploadingImage(true)
+    setImagePreview(null)
+    try {
+      const formData = new FormData()
+      formData.append('type', 'message')
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await parseResponseJson<{ url?: string; error?: string }>(res)
+      if (res.ok && data.url) {
+        setImagePreview(data.url)
+      } else {
+        alert(data?.error || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Upload failed')
+    } finally {
+      setUploadingImage(false)
+      e.target.value = ''
     }
   }
 
@@ -232,22 +271,20 @@ export default function BookingDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
-      
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <button
           onClick={() => router.push('/dashboard')}
-          className="mb-6 text-neon-cyan hover:text-neon-pink transition-colors"
+          className="mb-6 text-car-neon hover:text-car-electric transition-colors font-medium"
         >
           ← Back to Dashboard
         </button>
 
-        <FloatingCard glowColor="cyan" className="mb-6">
+        <FloatingCard glowColor="neon" className="mb-6">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-white">{booking.listing.title}</h1>
-              <p className="text-gray-300">{booking.listing.address}</p>
+              <h1 className="text-3xl font-bold mb-2 text-gray-900">{booking.listing.title}</h1>
+              <p className="text-gray-600">{booking.listing.address}</p>
             </div>
             <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${statusColors[booking.status] || statusColors.PENDING}`}>
               {booking.status}
@@ -256,18 +293,18 @@ export default function BookingDetailsPage() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-              <p className="text-sm text-gray-400 mb-1">Parking Period</p>
-              <p className="text-white font-semibold">
+              <p className="text-sm text-gray-500 mb-1">Parking Period</p>
+              <p className="text-gray-900 font-semibold">
                 {new Date(booking.startTime).toLocaleString()}
               </p>
-              <p className="text-white">
+              <p className="text-gray-700">
                 to {new Date(booking.endTime).toLocaleString()}
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-400 mb-1">Total Amount</p>
-              <p className="text-2xl font-bold text-neon-cyan">
+              <p className="text-sm text-gray-500 mb-1">Total Amount</p>
+              <p className="text-2xl font-bold text-car-neon">
                 {formatCurrency(booking.totalAmount)}
               </p>
               {booking.payment && (
@@ -278,12 +315,12 @@ export default function BookingDetailsPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-400 mb-1">Vehicle</p>
-              <p className="text-white font-semibold">
+              <p className="text-sm text-gray-500 mb-1">Vehicle</p>
+              <p className="text-gray-900 font-semibold">
                 {booking.vehicleMake} {booking.vehicleModel}
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-gray-600">
                   License: {booking.licensePlate}{booking.licensePlateState ? ` (${booking.licensePlateState})` : ''}
                 </p>
                 {isHost && booking.status === 'ACTIVE' && (
@@ -302,11 +339,11 @@ export default function BookingDetailsPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-400 mb-1">Contact</p>
-              <p className="text-white font-semibold">
+              <p className="text-sm text-gray-500 mb-1">Contact</p>
+              <p className="text-gray-900 font-semibold">
                 {otherUser.firstName} {otherUser.lastName}
               </p>
-              <p className="text-sm text-gray-300">{otherUser.email}</p>
+              <p className="text-sm text-gray-600">{otherUser.email}</p>
             </div>
           </div>
 
@@ -352,15 +389,15 @@ export default function BookingDetailsPage() {
 
           {/* Driver Actions */}
           {isDriver && booking.status === 'ACTIVE' && (
-            <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
-              <h3 className="font-semibold mb-3 text-white">Extend Booking</h3>
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="font-semibold mb-3 text-gray-900">Extend Booking</h3>
               <div className="flex gap-2">
                 <input
                   type="datetime-local"
                   value={newEndTime}
                   onChange={(e) => setNewEndTime(e.target.value)}
                   min={new Date(booking.endTime).toISOString().slice(0, 16)}
-                  className="flex-1 px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white"
+                  className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900"
                 />
                 <NeonButton
                   variant="primary"
@@ -388,11 +425,11 @@ export default function BookingDetailsPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-white/5 rounded-lg border border-white/10"
+                  className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                 >
-                  <h3 className="font-semibold mb-3 text-white">Rate Your Experience</h3>
+                  <h3 className="font-semibold mb-3 text-gray-900">Rate Your Experience</h3>
                   <div className="mb-4">
-                    <p className="text-sm text-gray-400 mb-2">Rating</p>
+                    <p className="text-sm text-gray-600 mb-2">Rating</p>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -410,11 +447,11 @@ export default function BookingDetailsPage() {
                     </div>
                   </div>
                   <div className="mb-4">
-                    <label className="block text-sm text-gray-400 mb-2">Comment (Optional)</label>
+                    <label className="block text-sm text-gray-600 mb-2">Comment (Optional)</label>
                     <textarea
                       value={rating.comment}
                       onChange={(e) => setRating({ ...rating, comment: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400"
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500"
                       rows={3}
                       placeholder="Share your experience..."
                     />
@@ -446,12 +483,12 @@ export default function BookingDetailsPage() {
         </FloatingCard>
 
         {/* Messages */}
-        <FloatingCard glowColor="purple">
-          <h2 className="text-2xl font-bold mb-4 text-white">Messages</h2>
+        <FloatingCard glowColor="turbo">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900">Messages</h2>
 
           <div
             id="messages"
-            className="h-64 overflow-y-auto border border-white/10 rounded-lg p-4 mb-4 space-y-3 bg-black/20"
+            className="h-64 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 space-y-3 bg-gray-50"
           >
             {booking.messages && booking.messages.length > 0 ? (
               booking.messages.map((msg: any) => (
@@ -461,17 +498,26 @@ export default function BookingDetailsPage() {
                     msg.senderId === user?.userId ? 'justify-end' : 'justify-start'
                   }`}
                 >
-                  <div
-                    className={`max-w-xs rounded-lg p-3 ${
-                      msg.senderId === user?.userId
-                        ? 'bg-neon-cyan/20 text-white border border-neon-cyan/30'
-                        : 'bg-white/5 text-gray-300 border border-white/10'
-                    }`}
-                  >
+                    <div
+                      className={`max-w-xs rounded-lg p-3 ${
+                        msg.senderId === user?.userId
+                          ? 'bg-car-neon/10 text-gray-900 border border-car-neon/30'
+                          : 'bg-white text-gray-800 border border-gray-200'
+                      }`}
+                    >
                     <p className="text-xs mb-1 opacity-75">
                       {msg.sender.firstName} {msg.sender.lastName}
                     </p>
-                    <p>{msg.content}</p>
+                    {msg.imageUrl && (
+                      <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer" className="block mb-2 rounded overflow-hidden max-w-[200px]">
+                        <img
+                          src={msg.imageUrl}
+                          alt="Shared"
+                          className="max-h-[200px] object-cover rounded"
+                        />
+                      </a>
+                    )}
+                    {msg.content ? <p>{msg.content}</p> : null}
                     <p className="text-xs mt-1 opacity-75">
                       {new Date(msg.createdAt).toLocaleString()}
                     </p>
@@ -479,11 +525,67 @@ export default function BookingDetailsPage() {
                 </div>
               ))
             ) : (
-              <p className="text-gray-400 text-center py-8">No messages yet</p>
+              <p className="text-gray-500 text-center py-8">No messages yet</p>
             )}
           </div>
 
-          <div className="flex gap-2">
+          {imagePreview && (
+            <div className="mb-4 relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-h-24 object-cover rounded-lg border border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={() => setImagePreview(null)}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500/90 text-white text-sm flex items-center justify-center hover:bg-red-500"
+                aria-label="Remove image"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          <div className="flex gap-2 items-center">
+            <input
+              ref={attachInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => attachInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="p-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+              title="Attach image"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="p-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+              title="Take photo"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" />
+              </svg>
+            </button>
             <input
               type="text"
               value={message}
@@ -495,14 +597,14 @@ export default function BookingDetailsPage() {
                 }
               }}
               placeholder="Type a message..."
-              className="flex-1 px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-neon-cyan focus:border-neon-cyan"
+              className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-car-neon focus:border-car-neon"
             />
             <NeonButton
               variant="primary"
               onClick={sendMessage}
-              disabled={sendingMessage || !message.trim()}
+              disabled={sendingMessage || uploadingImage || (!message.trim() && !imagePreview)}
             >
-              {sendingMessage ? 'Sending...' : 'Send'}
+              {sendingMessage ? 'Sending...' : uploadingImage ? 'Uploading...' : 'Send'}
             </NeonButton>
           </div>
         </FloatingCard>

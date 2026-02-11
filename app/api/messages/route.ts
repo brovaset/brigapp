@@ -21,20 +21,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { bookingId, content } = body
+    const { bookingId, content, imageUrl } = body
 
-    if (!bookingId || !content) {
+    if (!bookingId) {
       return NextResponse.json(
-        { error: 'Booking ID and content required' },
+        { error: 'Booking ID required' },
         { status: 400 }
       )
     }
 
-    // Validate and sanitize message content
-    const sanitizedContent = sanitizeString(content)
-    if (sanitizedContent.length === 0) {
+    const sanitizedContent = content != null ? sanitizeString(String(content)) : ''
+    const hasImage = imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('/uploads/messages/')
+    if (!hasImage && sanitizedContent.length === 0) {
       return NextResponse.json(
-        { error: 'Message content cannot be empty' },
+        { error: 'Message content or image required' },
         { status: 400 }
       )
     }
@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
         senderId: session.userId,
         receiverId,
         content: sanitizedContent,
+        imageUrl: hasImage ? imageUrl : undefined,
       },
       include: {
         sender: {

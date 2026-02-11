@@ -62,8 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           })
           .catch(error => {
-            console.error('Auth check error:', error)
-            // Clear invalid token
+            console.error('Auth check error:', error ?? 'Unknown error')
             document.cookie = 'auth-token=; path=/; max-age=0'
           })
           .finally(() => setLoading(false))
@@ -105,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(error => {
-        console.error('Login error:', error)
+        console.error('Login error:', error ?? 'Unknown error')
       })
   }
 

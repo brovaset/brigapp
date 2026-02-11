@@ -162,6 +162,7 @@ model Message {
   receiverId  String
   receiver    User     @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   content     String
+  imageUrl    String?
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 }

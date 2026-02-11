@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const type = formData.get('type') as string | null
-    if (type !== 'listing' && type !== 'profile') {
-      return NextResponse.json({ error: 'Invalid type. Use "listing" or "profile".' }, { status: 400 })
+    if (type !== 'listing' && type !== 'profile' && type !== 'message') {
+      return NextResponse.json({ error: 'Invalid type. Use "listing", "profile", or "message".' }, { status: 400 })
     }
 
     const files = formData.getAll('file') as File[]
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    if (type === 'profile' && toProcess.length > 1) {
-      return NextResponse.json({ error: 'Profile allows only one image' }, { status: 400 })
+    if ((type === 'profile' || type === 'message') && toProcess.length > 1) {
+      return NextResponse.json({ error: type === 'profile' ? 'Profile allows only one image' : 'Message allows only one image' }, { status: 400 })
     }
 
     const baseDir = path.join(process.cwd(), 'public', 'uploads', type)

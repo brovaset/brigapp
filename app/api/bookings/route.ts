@@ -46,6 +46,12 @@ export async function GET(request: NextRequest) {
           },
         },
         payment: true,
+        messages: {
+          include: {
+            sender: { select: { firstName: true, lastName: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })

@@ -7,7 +7,7 @@ interface FloatingCardProps {
   children: ReactNode
   delay?: number
   className?: string
-  glowColor?: 'neon' | 'electric' | 'turbo' | 'neutral' | 'cyan' | 'pink' | 'purple'
+  glowColor?: 'neon' | 'electric' | 'turbo' | 'neutral' | 'cyan' | 'pink' | 'purple' | 'gradient'
 }
 
 const colorVariants = {
@@ -31,6 +31,11 @@ const colorVariants = {
     bg: 'bg-white/95 hover:bg-gradient-to-br hover:from-white hover:to-car-neon/5',
     shadow: 'shadow-lg hover:shadow-[0_8px_30px_rgba(0,122,255,0.1)]',
   },
+  gradient: {
+    border: 'border-l-purple-500/70',
+    bg: 'bg-gradient-to-br from-purple-500/30 via-purple-400/15 to-cyan-500/30',
+    shadow: 'shadow-lg shadow-purple-500/20',
+  },
 }
 
 export default function FloatingCard({
@@ -40,7 +45,7 @@ export default function FloatingCard({
   glowColor = 'neon',
 }: FloatingCardProps) {
   const variant = colorVariants[
-    glowColor === 'cyan' ? 'neon' : glowColor === 'pink' || glowColor === 'purple' ? 'turbo' : glowColor
+    glowColor === 'cyan' ? 'neon' : glowColor === 'pink' || glowColor === 'purple' ? 'turbo' : glowColor === 'gradient' ? 'gradient' : glowColor
   ]
 
   return (

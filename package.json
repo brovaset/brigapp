@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "pytest tests/api -v -m api",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "pytest tests/e2e -v -m e2e",
+    "test:all": "pytest tests -v",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
@@ -38,12 +43,14 @@
     "@types/node": "20.19.27",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.4.32",
     "prisma": "^6.19.2",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }
