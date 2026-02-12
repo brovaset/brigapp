@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
 import { calculateDistance, parseResponseJson } from '@/lib/utils'
+import { getCurrentPosition, GeoError } from '@/lib/geolocation'
 
 export interface MapSearchListing {
   id: string
@@ -21,9 +22,13 @@ export interface MapSearchListing {
 interface MapSearchProps {
   onListingSelect: (listing: MapSearchListing) => void
   userLocation?: { lat: number; lng: number }
+  /** Initial map center (e.g. from search params "Find parking near me") */
+  initialCenter?: { lat: number; lng: number }
+  /** Pre-fetched listings to display (e.g. from search page with filters); when provided, map shows these instead of fetching */
+  listings?: MapSearchListing[]
 }
 
-export default function MapSearch({ onListingSelect, userLocation }: MapSearchProps) {
+export default function MapSearch({ onListingSelect, userLocation, initialCenter, listings: listingsProp }: MapSearchProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [listings, setListings] = useState<MapSearchListing[]>([])
   const [map, setMap] = useState<google.maps.Map | null>(null)
@@ -34,8 +39,11 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [trackingEnabled, setTrackingEnabled] = useState(false)
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const [locationLoading, setLocationLoading] = useState(false)
   const watchIdRef = useRef<number | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
+  const userMarkerRef = useRef<google.maps.Marker | null>(null)
 
   useEffect(() => {
     const loadMap = async () => {
@@ -60,7 +68,7 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
           return
         }
 
-        const defaultLocation = userLocation || { lat: 40.7128, lng: -74.0060 } // NYC default
+        const defaultLocation = initialCenter || userLocation || { lat: 40.7128, lng: -74.0060 } // NYC default
 
         const mapInstance = new google.maps.Map(mapRef.current, {
           center: defaultLocation,
@@ -74,6 +82,17 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
         setMap(mapInstance)
         mapInstanceRef.current = mapInstance
 
+        // When listings are provided externally, display them without fetching
+        if (listingsProp && listingsProp.length > 0) {
+          const refPoint = defaultLocation
+          const withDistance = listingsProp.map((l: MapSearchListing) => ({
+            ...l,
+            distance: l.distance ?? calculateDistance(refPoint.lat, refPoint.lng, l.latitude, l.longitude),
+          })).sort((a: MapSearchListing, b: MapSearchListing) => (a.distance || 0) - (b.distance || 0))
+          setListings(withDistance)
+          updateMarkers(withDistance, mapInstance)
+        }
+
         // Get user location with high accuracy
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
@@ -86,11 +105,10 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
               setLocationAccuracy(position.coords.accuracy)
               mapInstance.setCenter(userPos)
               mapInstance.setZoom(15)
-              
-              // Add user location marker
               addUserMarker(userPos, mapInstance)
-              
-              loadListings(userPos.lat, userPos.lng, mapInstance)
+              if (!listingsProp?.length) {
+                loadListings(userPos.lat, userPos.lng, mapInstance)
+              }
             },
             (error: GeolocationPositionError) => {
               // Geolocation failed (permission denied, timeout, or unavailable) - fall back to default location
@@ -102,7 +120,9 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
               if (process.env.NODE_ENV === 'development') {
                 console.warn('Geolocation:', messages[error?.code] ?? 'Could not get location')
               }
-              loadListings(defaultLocation.lat, defaultLocation.lng, mapInstance)
+              if (!listingsProp?.length) {
+                loadListings(defaultLocation.lat, defaultLocation.lng, mapInstance)
+              }
             },
             {
               enableHighAccuracy: true,
@@ -111,7 +131,9 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
             }
           )
         } else {
-          loadListings(defaultLocation.lat, defaultLocation.lng, mapInstance)
+          if (!listingsProp?.length) {
+            loadListings(defaultLocation.lat, defaultLocation.lng, mapInstance)
+          }
         }
       } catch (error) {
         console.error('Error loading map:', error)
@@ -128,6 +150,19 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
       }
     }
   }, [])
+
+  // Update markers when external listings prop changes
+  useEffect(() => {
+    if (listingsProp && listingsProp.length > 0 && mapInstanceRef.current) {
+      const refPoint = currentLocation || initialCenter || userLocation || { lat: 40.7128, lng: -74.0060 }
+      const withDistance = listingsProp.map((l: MapSearchListing) => ({
+        ...l,
+        distance: l.distance ?? calculateDistance(refPoint.lat, refPoint.lng, l.latitude, l.longitude),
+      })).sort((a: MapSearchListing, b: MapSearchListing) => (a.distance || 0) - (b.distance || 0))
+      setListings(withDistance)
+      updateMarkers(withDistance, mapInstanceRef.current)
+    }
+  }, [listingsProp])
 
   const loadListings = async (lat: number, lng: number, mapInstance?: google.maps.Map) => {
     try {
@@ -152,9 +187,8 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
   }
 
   const addUserMarker = (position: { lat: number; lng: number }, mapInstance: google.maps.Map) => {
-    // Remove existing user marker
-    if (userMarker) {
-      userMarker.setMap(null)
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setMap(null)
     }
 
     // Create custom user location icon
@@ -189,7 +223,31 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
       })
     }
 
+    userMarkerRef.current = marker
     setUserMarker(marker)
+  }
+
+  const handleMyLocation = async () => {
+    setLocationError(null)
+    setLocationLoading(true)
+    try {
+      const { lat, lng } = await getCurrentPosition()
+      const userPos = { lat, lng }
+      setCurrentLocation(userPos)
+      setLocationAccuracy(null)
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setCenter(userPos)
+        mapInstanceRef.current.setZoom(15)
+        addUserMarker(userPos, mapInstanceRef.current)
+        if (!listingsProp?.length) {
+          loadListings(lat, lng, mapInstanceRef.current)
+        }
+      }
+    } catch (err) {
+      setLocationError(err instanceof GeoError ? err.message : 'Could not get location. Try again or enter an address.')
+    } finally {
+      setLocationLoading(false)
+    }
   }
 
   const startTracking = () => {
@@ -338,6 +396,29 @@ export default function MapSearch({ onListingSelect, userLocation }: MapSearchPr
         </div>
       )}
       
+      {/* My Location button - always visible */}
+      <button
+        onClick={handleMyLocation}
+        disabled={locationLoading}
+        className="absolute bottom-4 right-4 z-10 p-3 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        title="My Location"
+        aria-label="Center map on my location"
+      >
+        <svg className="w-6 h-6 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
+
+      {locationError && (
+        <div className="absolute bottom-14 left-4 right-20 z-10 flex items-center justify-between gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 shadow" role="alert">
+          <span>{locationError}</span>
+          <button type="button" onClick={() => setLocationError(null)} className="shrink-0 p-1 rounded hover:bg-amber-100 text-amber-600" aria-label="Dismiss">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
       {/* GPS Tracking Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         {currentLocation && (

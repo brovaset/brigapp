@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import MapSearch, { type MapSearchListing } from '@/components/MapSearch'
@@ -62,6 +62,12 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchListings()
+  }, [searchParams])
+
+  // Clear near-me error when user searches by address or gets lat/lng
+  useEffect(() => {
+    const hasLocation = searchParams.get('location') || (searchParams.get('lat') && searchParams.get('lng'))
+    if (hasLocation) setNearMeError(null)
   }, [searchParams])
 
   const fetchListings = async () => {
@@ -219,6 +225,22 @@ export default function SearchPage() {
     return null
   }
 
+  const mapListings = useMemo((): MapSearchListing[] => (
+    listings.map((l) => ({
+      id: l.id,
+      title: l.title,
+      address: l.address,
+      latitude: l.latitude,
+      longitude: l.longitude,
+      pricePerHour: l.pricePerHour,
+      pricePerDay: l.pricePerDay,
+      averageRating: l.averageRating ?? 0,
+      ratingCount: l.ratingCount ?? 0,
+      photos: l.photos ?? [],
+      distance: l.distance,
+    }))
+  ), [listings])
+
   const handleListingSelect = (listing: MapSearchListing) => {
     setSelectedListing(listing as Listing)
     setShowBookingForm(true)
@@ -279,9 +301,17 @@ export default function SearchPage() {
         {!searchParams.get('lat') && !searchParams.get('lng') && (
           <div className="mb-6">
             {nearMeError && (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
-                {nearMeError}
-              </p>
+              <div className="flex items-center justify-between gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
+                <span>{nearMeError}</span>
+                <button
+                  type="button"
+                  onClick={() => setNearMeError(null)}
+                  className="shrink-0 p-1 rounded hover:bg-amber-100 text-amber-600"
+                  aria-label="Dismiss"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             )}
             <motion.button
               type="button"
@@ -342,7 +372,18 @@ export default function SearchPage() {
           /* Map View */
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border-2 border-gray-200/80 overflow-hidden hover:shadow-[0_8px_30px_rgba(0,122,255,0.08)] transition-shadow duration-300">
-              <MapSearch onListingSelect={handleListingSelect} />
+              <MapSearch
+                onListingSelect={handleListingSelect}
+                initialCenter={
+                  searchParams.get('lat') && searchParams.get('lng')
+                    ? {
+                        lat: parseFloat(searchParams.get('lat')!),
+                        lng: parseFloat(searchParams.get('lng')!),
+                      }
+                    : undefined
+                }
+                listings={mapListings}
+              />
             </div>
 
             {/* Sidebar */}

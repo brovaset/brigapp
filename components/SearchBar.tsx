@@ -49,6 +49,7 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
+    setLocationError(null)
     const params = new URLSearchParams()
     if (location) params.set('location', location)
     if (checkIn) params.set('startDate', checkIn)
@@ -64,9 +65,17 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
     return (
       <form onSubmit={handleSubmit} className="relative">
         {locationError && (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
-            {locationError}
-          </p>
+          <div className="flex items-center justify-between gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
+            <span>{locationError}</span>
+            <button
+              type="button"
+              onClick={() => setLocationError(null)}
+              className="shrink-0 p-1 rounded hover:bg-amber-100 text-amber-600"
+              aria-label="Dismiss"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
         )}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl sm:rounded-full shadow-lg border border-gray-200 overflow-hidden hover:border-car-neon/50 hover:shadow-xl transition-all gap-0 sm:gap-0">
           <div className="flex-1 px-4 sm:px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
@@ -132,9 +141,17 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
       {locationError && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
-          {locationError}
-        </p>
+        <div className="flex items-center justify-between gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
+          <span>{locationError}</span>
+          <button
+            type="button"
+            onClick={() => setLocationError(null)}
+            className="shrink-0 p-1 rounded hover:bg-amber-100 text-amber-600"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
       )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
