@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency, parseResponseJson } from '@/lib/utils'
 import FloatingCard from '@/components/FloatingCard'
@@ -143,7 +144,14 @@ export default function ListingDetailPage() {
         </button>
 
         <FloatingCard glowColor="neon" className="mb-6">
-          <h1 className="text-3xl font-bold mb-4 text-gray-900">{listing.title}</h1>
+          <div className="flex justify-between items-start gap-4 mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">{listing.title}</h1>
+            <Link href={`/host/listings/${params.id}/edit`}>
+              <NeonButton variant="outline" className="whitespace-nowrap">
+                Edit Listing
+              </NeonButton>
+            </Link>
+          </div>
           <p className="text-gray-600 mb-2">{listing.address}</p>
           <p className="text-gray-600 mb-4">{listing.description}</p>
           

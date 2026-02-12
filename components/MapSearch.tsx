@@ -77,6 +77,7 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
           streetViewControl: false,
           fullscreenControl: true,
           zoomControl: true,
+          zoomControlOptions: { position: google.maps.ControlPosition.TOP_RIGHT },
         })
 
         setMap(mapInstance)
@@ -91,6 +92,7 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
           })).sort((a: MapSearchListing, b: MapSearchListing) => (a.distance || 0) - (b.distance || 0))
           setListings(withDistance)
           updateMarkers(withDistance, mapInstance)
+          setLoading(false)
         }
 
         // Get user location with high accuracy
@@ -323,6 +325,8 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
         ? `${listing.distance < 1 ? Math.round(listing.distance * 1000) + 'm' : listing.distance.toFixed(1) + 'km'} away`
         : ''
 
+      const listingId = listing.id
+      // Use parent window so View Details works when InfoWindow content runs in an iframe
       const infoWindow = new google.maps.InfoWindow({
         content: `
           <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif;">
@@ -332,10 +336,9 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
             <p style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">$${listing.pricePerHour.toFixed(2)}/hr</p>
             ${listing.averageRating > 0 ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">${listing.averageRating.toFixed(1)} (${listing.ratingCount || 0} reviews)</p>` : ''}
             <button 
-              onclick="window.selectListing('${listing.id}')"
+              type="button"
+              onclick="(function(w){if(w.selectListing)w.selectListing('${listingId.replace(/'/g, "\\'")}');})(window.opener||window.parent||window)"
               style="margin-top: 8px; padding: 8px 16px; background: linear-gradient(to right, #007aff, #34c759); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;"
-              onmouseover="this.style.opacity='0.9'"
-              onmouseout="this.style.opacity='1'"
             >
               View Details
             </button>
@@ -396,7 +399,7 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
         </div>
       )}
       
-      {/* My Location button - always visible */}
+      {/* My Location button - bottom right, zoom moved to top right to avoid overlap */}
       <button
         onClick={handleMyLocation}
         disabled={locationLoading}
@@ -419,8 +422,8 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
         </div>
       )}
 
-      {/* GPS Tracking Controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+      {/* GPS Tracking Controls - right margin for zoom (TOP_RIGHT) */}
+      <div className="absolute top-4 right-14 z-10 flex flex-col gap-2">
         {currentLocation && (
           <div className="bg-white rounded-lg shadow-lg px-3 py-2 border border-gray-200">
             <div className="flex items-center gap-2 text-xs text-gray-600">

@@ -92,12 +92,6 @@ export default function NewListingPage() {
     setLoading(true)
     setError('')
 
-    if (!formData.latitude || !formData.longitude) {
-      setError('Please set location coordinates')
-      setLoading(false)
-      return
-    }
-
     try {
       const { evChargerType, ...restAmenities } = formData.amenities
       const amenitiesToSend = {
@@ -547,7 +541,7 @@ export default function NewListingPage() {
               <NeonButton
                 type="submit"
                 variant="primary"
-                disabled={loading || !formData.latitude || !formData.longitude}
+                disabled={loading}
                 className="flex-1"
               >
                 {loading ? (

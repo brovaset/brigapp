@@ -81,6 +81,17 @@ export default function SearchFilters() {
     setOptimisticInstantBook(null)
   }, [instantBookFromUrl])
 
+  useEffect(() => {
+    if (expanded) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [expanded])
+
   const activeQuickFilter = quickFilterActive ?? filter
   const activeAmenities = optimisticAmenities ?? amenities
   const activeEvChargerType = optimisticEvChargerType !== null ? optimisticEvChargerType : evChargerType

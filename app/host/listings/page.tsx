@@ -203,6 +203,11 @@ export default function HostListingsPage() {
                         Manage
                       </NeonButton>
                     </Link>
+                    <Link href={`/host/listings/${listing.id}/edit`} className="flex-1">
+                      <NeonButton variant="outline" className="w-full text-sm">
+                        Edit
+                      </NeonButton>
+                    </Link>
                     <NeonButton
                       variant={listing.isActive ? 'outline' : 'primary'}
                       onClick={() => handleToggleActive(listing)}

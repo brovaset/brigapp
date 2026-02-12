@@ -70,6 +70,22 @@ export default function SearchPage() {
     if (hasLocation) setNearMeError(null)
   }, [searchParams])
 
+  const mapListings = useMemo((): MapSearchListing[] => (
+    listings.map((l) => ({
+      id: l.id,
+      title: l.title,
+      address: l.address,
+      latitude: l.latitude,
+      longitude: l.longitude,
+      pricePerHour: l.pricePerHour,
+      pricePerDay: l.pricePerDay,
+      averageRating: l.averageRating ?? 0,
+      ratingCount: l.ratingCount ?? 0,
+      photos: l.photos ?? [],
+      distance: l.distance,
+    }))
+  ), [listings])
+
   const fetchListings = async () => {
     setLoading(true)
     try {
@@ -225,25 +241,8 @@ export default function SearchPage() {
     return null
   }
 
-  const mapListings = useMemo((): MapSearchListing[] => (
-    listings.map((l) => ({
-      id: l.id,
-      title: l.title,
-      address: l.address,
-      latitude: l.latitude,
-      longitude: l.longitude,
-      pricePerHour: l.pricePerHour,
-      pricePerDay: l.pricePerDay,
-      averageRating: l.averageRating ?? 0,
-      ratingCount: l.ratingCount ?? 0,
-      photos: l.photos ?? [],
-      distance: l.distance,
-    }))
-  ), [listings])
-
   const handleListingSelect = (listing: MapSearchListing) => {
     setSelectedListing(listing as Listing)
-    setShowBookingForm(true)
   }
 
   const handleBook = async () => {

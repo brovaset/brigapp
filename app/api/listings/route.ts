@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { calculateDistance } from '@/lib/utils'
+import { geocodeAddress } from '@/lib/geocode'
 
 function parsePhotos(photos: string | undefined): string[] {
   if (!photos) return []
@@ -57,13 +58,14 @@ export async function GET(request: NextRequest) {
       listings = listings.map(({ blockedDates, ...l }: any) => l)
     }
 
-    // Filter by distance if coordinates provided
+    // Filter by distance if coordinates provided (exclude 0,0 so ungeocoded listings don't appear in wrong place)
     if (lat && lng) {
       const userLat = parseFloat(lat)
       const userLng = parseFloat(lng)
       const radiusKm = parseFloat(radius)
 
       listings = listings.filter(listing => {
+        if (listing.latitude === 0 && listing.longitude === 0) return false
         const distance = calculateDistance(userLat, userLng, listing.latitude, listing.longitude)
         return distance <= radiusKm
       })
@@ -131,15 +133,24 @@ export async function POST(request: NextRequest) {
       !city ||
       !state ||
       !zipCode ||
-      !latitude ||
-      !longitude ||
-      !pricePerHour ||
-      !pricePerDay
+      pricePerHour == null ||
+      pricePerDay == null
     ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
+    }
+
+    let lat = latitude != null && latitude !== '' ? parseFloat(latitude) : 0
+    let lng = longitude != null && longitude !== '' ? parseFloat(longitude) : 0
+
+    if (lat === 0 && lng === 0 && address && city && state) {
+      const geocoded = await geocodeAddress(address, city, state, zipCode || '')
+      if (geocoded) {
+        lat = geocoded.lat
+        lng = geocoded.lng
+      }
     }
 
     const listing = await prisma.listing.create({
@@ -151,8 +162,8 @@ export async function POST(request: NextRequest) {
         city,
         state,
         zipCode,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
+        latitude: lat,
+        longitude: lng,
         pricePerHour: parseFloat(pricePerHour),
         pricePerDay: parseFloat(pricePerDay),
         maxVehicleSize,
