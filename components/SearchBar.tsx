@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { getCurrentPosition, GeoError } from '@/lib/geolocation'
+
+const DEFAULT_RADIUS_KM = '10'
 
 interface SearchBarProps {
   compact?: boolean
@@ -11,6 +14,8 @@ interface SearchBarProps {
 
 export default function SearchBar({ compact = false, onSearch }: SearchBarProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const [location, setLocation] = useState('')
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
@@ -20,6 +25,27 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
     vehicleSize: '',
     instantBook: false,
   })
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
+
+  const handleUseMyLocation = async () => {
+    setLocationError(null)
+    setLocationLoading(true)
+    try {
+      const { lat, lng } = await getCurrentPosition()
+      const params = new URLSearchParams(pathname === '/search' ? searchParams.toString() : '')
+      params.set('lat', String(lat))
+      params.set('lng', String(lng))
+      if (!params.has('radius')) params.set('radius', DEFAULT_RADIUS_KM)
+      params.delete('location')
+      router.push(`/search?${params.toString()}`)
+    } catch (err) {
+      const message = err instanceof GeoError ? err.message : 'Could not get location. Try again or enter an address.'
+      setLocationError(message)
+    } finally {
+      setLocationLoading(false)
+    }
+  }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -37,9 +63,24 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
   if (compact) {
     return (
       <form onSubmit={handleSubmit} className="relative">
+        {locationError && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
+            {locationError}
+          </p>
+        )}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl sm:rounded-full shadow-lg border border-gray-200 overflow-hidden hover:border-car-neon/50 hover:shadow-xl transition-all gap-0 sm:gap-0">
           <div className="flex-1 px-4 sm:px-6 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Location</label>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <label className="text-xs font-semibold text-gray-700">Location</label>
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={locationLoading}
+                className="text-xs font-medium text-car-neon hover:text-car-electric disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {locationLoading ? 'Getting location…' : 'Use my location'}
+              </button>
+            </div>
             <input
               type="text"
               value={location}
@@ -90,6 +131,11 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
+      {locationError && (
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
+          {locationError}
+        </p>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -98,7 +144,17 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
       >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
           <div className="border-b md:border-b-0 md:border-r border-gray-200 p-4 hover:bg-gray-50 transition-colors">
-            <label className="block text-xs font-semibold text-gray-700 mb-2">Location</label>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <label className="text-xs font-semibold text-gray-700">Location</label>
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={locationLoading}
+                className="text-xs font-medium text-car-neon hover:text-car-electric disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {locationLoading ? 'Getting location…' : 'Use my location'}
+              </button>
+            </div>
             <input
               type="text"
               value={location}

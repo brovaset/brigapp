@@ -5,6 +5,7 @@ import {
   calculateBookingPrice,
   cn,
   parseResponseJson,
+  mapAuthError,
 } from './utils'
 
 describe('formatCurrency', () => {
@@ -80,5 +81,40 @@ describe('parseResponseJson', () => {
   it('throws when body is invalid JSON', async () => {
     const res = new Response('{ invalid }')
     await expect(parseResponseJson(res)).rejects.toThrow('Invalid JSON')
+  })
+})
+
+const serverMsg = 'Server error. Check that the app and database are running (run: npm run db:push).'
+const jsonMsg = 'Server returned an error page. Make sure the app and database are set up.'
+const reachMsg = 'Cannot reach server. Is the app running? Try: npm run dev'
+
+describe('mapAuthError', () => {
+  it('maps Load failed to reach-server message', () => {
+    expect(mapAuthError(new Error('Load failed'))).toBe(reachMsg)
+  })
+
+  it('maps Failed to fetch to reach-server message', () => {
+    expect(mapAuthError(new Error('Failed to fetch'))).toBe(reachMsg)
+  })
+
+  it('maps Request failed: 500 to server error message', () => {
+    expect(mapAuthError(new Error('Request failed: 500'))).toBe(serverMsg)
+  })
+
+  it('maps Response is not JSON to JSON error message', () => {
+    expect(mapAuthError(new Error('Response is not JSON'))).toBe(jsonMsg)
+  })
+
+  it('maps network error to reach-server message', () => {
+    expect(mapAuthError(new Error('network error'))).toBe(reachMsg)
+  })
+
+  it('passthroughs generic messages', () => {
+    expect(mapAuthError(new Error('Something else'))).toBe('Something else')
+  })
+
+  it('returns Something went wrong for non-Error', () => {
+    expect(mapAuthError(null)).toBe('Something went wrong')
+    expect(mapAuthError(undefined)).toBe('Something went wrong')
   })
 })

@@ -117,3 +117,20 @@ export async function parseResponseJson<T = unknown>(res: Response): Promise<T> 
   throw new Error(res.ok ? 'Response is not JSON' : `Request failed: ${res.status}`)
 }
 
+/**
+ * Maps raw auth/network errors to user-friendly messages for login and register pages.
+ */
+export function mapAuthError(err: unknown): string {
+  const message = err instanceof Error ? err.message : 'Something went wrong'
+  const m = message.toLowerCase()
+  if (message.includes('Request failed: 500') || message.includes('500')) {
+    return 'Server error. Check that the app and database are running (run: npm run db:push).'
+  }
+  if (message.includes('not JSON') || message.includes('JSON')) {
+    return 'Server returned an error page. Make sure the app and database are set up.'
+  }
+  if (m.includes('fetch') || m.includes('network') || m.includes('failed') || m.includes('load')) {
+    return 'Cannot reach server. Is the app running? Try: npm run dev'
+  }
+  return message
+}

@@ -10,7 +10,7 @@ import NeonButton from '@/components/NeonButton'
 import Logo from '@/components/Logo'
 import { Input, ErrorMessage, LoadingSpinner } from '@/components/ui'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
-import { parseResponseJson } from '@/lib/utils'
+import { parseResponseJson, mapAuthError } from '@/lib/utils'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -51,16 +51,7 @@ export default function LoginPage() {
       const redirect = searchParams.get('redirect')
       router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard')
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong'
-      if (message.includes('Request failed: 500') || message.includes('500')) {
-        setError('Server error. Check that the app and database are running (run: npm run db:push).')
-      } else if (message.includes('not JSON') || message.includes('JSON')) {
-        setError('Server returned an error page. Make sure the app and database are set up.')
-      } else if (message.includes('fetch') || message.includes('network') || message.includes('Failed')) {
-        setError('Cannot reach server. Is the app running? Try: npm run dev')
-      } else {
-        setError(message)
-      }
+      setError(mapAuthError(err))
     } finally {
       setLoading(false)
     }

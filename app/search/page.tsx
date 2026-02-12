@@ -7,6 +7,7 @@ import MapSearch, { type MapSearchListing } from '@/components/MapSearch'
 import ListingCard from '@/components/ListingCard'
 import SearchBar from '@/components/SearchBar'
 import { formatCurrency, parseResponseJson, US_STATES } from '@/lib/utils'
+import { getCurrentPosition, GeoError } from '@/lib/geolocation'
 import { motion } from 'framer-motion'
 import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
@@ -31,6 +32,27 @@ export default function SearchPage() {
     licensePlate: '',
     licensePlateState: '',
   })
+  const [nearMeLoading, setNearMeLoading] = useState(false)
+  const [nearMeError, setNearMeError] = useState<string | null>(null)
+
+  const handleFindNearMe = async () => {
+    setNearMeError(null)
+    setNearMeLoading(true)
+    try {
+      const { lat, lng } = await getCurrentPosition()
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('lat', String(lat))
+      params.set('lng', String(lng))
+      if (!params.has('radius')) params.set('radius', '10')
+      params.delete('location')
+      router.push(`/search?${params.toString()}`)
+    } catch (err) {
+      const message = err instanceof GeoError ? err.message : 'Could not get location. Try again or enter an address.'
+      setNearMeError(message)
+    } finally {
+      setNearMeLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!user) {
@@ -249,9 +271,34 @@ export default function SearchPage() {
       <SearchFilters />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Search Bar */}
-        <div className="mb-8">
+        <div className="mb-6">
           <SearchBar compact />
         </div>
+
+        {/* Find parking near me - show when no lat/lng in URL */}
+        {!searchParams.get('lat') && !searchParams.get('lng') && (
+          <div className="mb-6">
+            {nearMeError && (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2" role="alert">
+                {nearMeError}
+              </p>
+            )}
+            <motion.button
+              type="button"
+              onClick={handleFindNearMe}
+              disabled={nearMeLoading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold bg-car-neon/10 text-car-neon border-2 border-car-neon/30 hover:bg-car-neon/20 hover:border-car-neon/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {nearMeLoading ? 'Getting location…' : 'Find parking near me'}
+            </motion.button>
+          </div>
+        )}
 
         <div className="flex items-center justify-between mb-6">
           <motion.h1

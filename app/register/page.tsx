@@ -10,7 +10,7 @@ import NeonButton from '@/components/NeonButton'
 import Logo from '@/components/Logo'
 import { Input, Select, ErrorMessage, LoadingSpinner } from '@/components/ui'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
-import { parseResponseJson } from '@/lib/utils'
+import { parseResponseJson, mapAuthError } from '@/lib/utils'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -49,7 +49,7 @@ export default function RegisterPage() {
       login(data.token)
       router.push('/dashboard')
     } catch (err) {
-      setError('Something went wrong')
+      setError(mapAuthError(err))
     } finally {
       setLoading(false)
     }
