@@ -21,14 +21,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { bookingId, content, imageUrl } = body
-
-    if (!bookingId) {
-      return NextResponse.json(
-        { error: 'Booking ID required' },
-        { status: 400 }
-      )
-    }
+    const { bookingId, listingId, content, imageUrl } = body
 
     const sanitizedContent = content != null ? sanitizeString(String(content)) : ''
     const hasImage = imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('/uploads/messages/')
@@ -46,37 +39,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get booking
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-    })
+    let receiverId: string
+    let createData: { bookingId?: string; listingId?: string; senderId: string; receiverId: string; content: string; imageUrl?: string }
 
-    if (!booking) {
+    if (bookingId) {
+      const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
+      if (!booking) {
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
+      }
+      if (booking.driverId !== session.userId && booking.hostId !== session.userId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+      receiverId = booking.driverId === session.userId ? booking.hostId : booking.driverId
+      createData = { bookingId, senderId: session.userId, receiverId, content: sanitizedContent, imageUrl: hasImage ? imageUrl : undefined }
+    } else if (listingId) {
+      const listing = await prisma.listing.findUnique({ where: { id: listingId }, select: { hostId: true } })
+      if (!listing) {
+        return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
+      }
+      if (listing.hostId === session.userId) {
+        const driverId = body.receiverId
+        if (!driverId) {
+          return NextResponse.json({ error: 'Host reply requires receiverId (driver)' }, { status: 400 })
+        }
+        receiverId = driverId
+      } else {
+        receiverId = listing.hostId
+      }
+      createData = { listingId, senderId: session.userId, receiverId, content: sanitizedContent, imageUrl: hasImage ? imageUrl : undefined }
+    } else {
       return NextResponse.json(
-        { error: 'Booking not found' },
-        { status: 404 }
+        { error: 'Booking ID or Listing ID required' },
+        { status: 400 }
       )
     }
 
-    if (booking.driverId !== session.userId && booking.hostId !== session.userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    // Determine receiver
-    const receiverId =
-      booking.driverId === session.userId
-        ? booking.hostId
-        : booking.driverId
-
-    // Create message
     const message = await prisma.message.create({
-      data: {
-        bookingId,
-        senderId: session.userId,
-        receiverId,
-        content: sanitizedContent,
-        imageUrl: hasImage ? imageUrl : undefined,
-      },
+      data: createData,
       include: {
         sender: {
           select: {

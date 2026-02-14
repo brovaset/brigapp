@@ -78,6 +78,7 @@ model Listing {
   blockedDates    BlockedDate[]
   ratings         Rating[]
   savedBy         SavedListing[]
+  inquiryMessages Message[] @relation("InquiryMessages")
 }
 
 model BlockedDate {
@@ -154,16 +155,18 @@ model Rating {
 }
 
 model Message {
-  id          String   @id @default(cuid())
-  bookingId   String
-  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  bookingId   String?
+  booking     Booking?  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  listingId   String?
+  listing     Listing?  @relation("InquiryMessages", fields: [listingId], references: [id], onDelete: Cascade)
   senderId    String
-  sender      User     @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  sender      User      @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiverId  String
-  receiver    User     @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiver    User      @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   content     String
   imageUrl    String?
-  isRead      Boolean  @default(false)
+  isRead      Boolean   @default(false)
   createdAt   DateTime @default(now())
 }
 

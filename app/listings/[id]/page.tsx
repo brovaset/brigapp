@@ -232,16 +232,25 @@ export default function ListingDetailPage() {
               className="bg-white rounded-xl shadow-lg border-2 border-gray-200/80 border-l-4 border-l-car-electric p-6 hover:shadow-[0_8px_30px_rgba(52,199,89,0.12)] hover:bg-gradient-to-br hover:from-white hover:to-car-electric/5 transition-all duration-300"
             >
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Hosted by</h2>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-car-neon/20 flex items-center justify-center text-xl font-semibold text-car-neon">
-                  {listing.host?.firstName?.[0]}{listing.host?.lastName?.[0]}
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-car-neon/20 flex items-center justify-center text-xl font-semibold text-car-neon">
+                    {listing.host?.firstName?.[0]}{listing.host?.lastName?.[0]}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {listing.host?.firstName} {listing.host?.lastName}
+                    </p>
+                    <p className="text-sm text-gray-500">Driveway host</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    {listing.host?.firstName} {listing.host?.lastName}
-                  </p>
-                  <p className="text-sm text-gray-500">Driveway host</p>
-                </div>
+                {user && listing.hostId && user.userId !== listing.hostId && (
+                  <Link href={`/listings/${listing.id}/message`} className="inline-block">
+                    <NeonButton variant="outline" className="shrink-0" type="button">
+                      Message host
+                    </NeonButton>
+                  </Link>
+                )}
               </div>
             </motion.div>
 
