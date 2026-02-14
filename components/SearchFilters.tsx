@@ -36,14 +36,14 @@ const VEHICLE_SIZES = [
 ]
 
 function parseFilters(searchParams: URLSearchParams) {
-  const filter = searchParams.get('filter') || 'all'
+  const filtersParam = searchParams.get('filters')?.split(',').filter(Boolean) ?? []
   const amenities = searchParams.get('amenities')?.split(',').filter(Boolean) ?? []
-  const evChargerType = searchParams.get('evChargerType') ?? ''
+  const evChargerTypes = searchParams.get('evChargerTypes')?.split(',').filter(Boolean) ?? []
   const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : 0
-  const vehicleSize = searchParams.get('vehicleSize') ?? ''
+  const vehicleSizes = searchParams.get('vehicleSizes')?.split(',').filter(Boolean) ?? []
   const instantBook = searchParams.get('instantBook') === 'true'
 
-  return { filter, amenities, evChargerType, maxPrice, vehicleSize, instantBook }
+  return { filtersParam, amenities, evChargerTypes, maxPrice, vehicleSizes, instantBook }
 }
 
 export default function SearchFilters() {
@@ -51,32 +51,32 @@ export default function SearchFilters() {
   const searchParams = useSearchParams()
   const [expanded, setExpanded] = useState(true)
   // Optimistic state so every filter button lights up immediately on click (before URL updates)
-  const [quickFilterActive, setQuickFilterActive] = useState<string | null>(null)
+  const [optimisticQuickFilters, setOptimisticQuickFilters] = useState<string[] | null>(null)
   const [optimisticAmenities, setOptimisticAmenities] = useState<string[] | null>(null)
-  const [optimisticEvChargerType, setOptimisticEvChargerType] = useState<string | null>(null)
-  const [optimisticVehicleSize, setOptimisticVehicleSize] = useState<string | null>(null)
+  const [optimisticEvChargerTypes, setOptimisticEvChargerTypes] = useState<string[] | null>(null)
+  const [optimisticVehicleSizes, setOptimisticVehicleSizes] = useState<string[] | null>(null)
   const [optimisticInstantBook, setOptimisticInstantBook] = useState<boolean | null>(null)
 
-  const { filter, amenities, evChargerType, maxPrice, vehicleSize, instantBook } = parseFilters(searchParams)
+  const { filtersParam, amenities, evChargerTypes, maxPrice, vehicleSizes, instantBook } = parseFilters(searchParams)
 
-  const filterFromUrl = searchParams.get('filter') || 'all'
+  const filtersFromUrl = searchParams.get('filters') ?? ''
   const amenitiesFromUrl = searchParams.get('amenities') ?? ''
-  const evChargerTypeFromUrl = searchParams.get('evChargerType') ?? ''
-  const vehicleSizeFromUrl = searchParams.get('vehicleSize') ?? ''
+  const evChargerTypesFromUrl = searchParams.get('evChargerTypes') ?? ''
+  const vehicleSizesFromUrl = searchParams.get('vehicleSizes') ?? ''
   const instantBookFromUrl = searchParams.get('instantBook') ?? ''
 
   useEffect(() => {
-    setQuickFilterActive(null)
-  }, [filterFromUrl])
+    setOptimisticQuickFilters(null)
+  }, [filtersFromUrl])
   useEffect(() => {
     setOptimisticAmenities(null)
   }, [amenitiesFromUrl])
   useEffect(() => {
-    setOptimisticEvChargerType(null)
-  }, [evChargerTypeFromUrl])
+    setOptimisticEvChargerTypes(null)
+  }, [evChargerTypesFromUrl])
   useEffect(() => {
-    setOptimisticVehicleSize(null)
-  }, [vehicleSizeFromUrl])
+    setOptimisticVehicleSizes(null)
+  }, [vehicleSizesFromUrl])
   useEffect(() => {
     setOptimisticInstantBook(null)
   }, [instantBookFromUrl])
@@ -92,21 +92,24 @@ export default function SearchFilters() {
     }
   }, [expanded])
 
-  const activeQuickFilter = quickFilterActive ?? filter
+  const activeQuickFilters = optimisticQuickFilters ?? filtersParam
   const activeAmenities = optimisticAmenities ?? amenities
-  const activeEvChargerType = optimisticEvChargerType !== null ? optimisticEvChargerType : evChargerType
-  const activeVehicleSize = optimisticVehicleSize !== null ? optimisticVehicleSize : vehicleSize
+  const activeEvChargerTypes = optimisticEvChargerTypes ?? evChargerTypes
+  const activeVehicleSizes = optimisticVehicleSizes ?? vehicleSizes
   const activeInstantBook = optimisticInstantBook !== null ? optimisticInstantBook : instantBook
 
-  const setQuickFilter = (id: string) => {
-    setQuickFilterActive(id)
-    const params = new URLSearchParams(searchParams.toString())
+  const toggleQuickFilter = (id: string) => {
+    let next: string[]
     if (id === 'all') {
-      params.delete('filter')
+      next = []
     } else {
-      params.set('filter', id)
+      const current = activeQuickFilters.includes(id)
+        ? activeQuickFilters.filter((f) => f !== id)
+        : [...activeQuickFilters, id]
+      next = current
     }
-    router.push(`/search?${params.toString()}`)
+    setOptimisticQuickFilters(next)
+    updateParams({ filters: next.length ? next.join(',') : null })
   }
 
   const updateParams = (updates: Record<string, string | null>) => {
@@ -127,20 +130,24 @@ export default function SearchFilters() {
     updateParams({ amenities: next.length ? next.join(',') : null })
   }
 
-  const setEvChargerType = (id: string) => {
-    const next = activeEvChargerType === id ? '' : id
-    setOptimisticEvChargerType(next || null)
-    updateParams({ evChargerType: next || null })
+  const toggleEvChargerType = (id: string) => {
+    const next = activeEvChargerTypes.includes(id)
+      ? activeEvChargerTypes.filter((t) => t !== id)
+      : [...activeEvChargerTypes, id]
+    setOptimisticEvChargerTypes(next)
+    updateParams({ evChargerTypes: next.length ? next.join(',') : null })
   }
 
   const setMaxPrice = (value: number) => {
     updateParams({ maxPrice: value > 0 ? String(value) : null })
   }
 
-  const setVehicleSize = (id: string) => {
-    const next = activeVehicleSize === id ? '' : id
-    setOptimisticVehicleSize(next || null)
-    updateParams({ vehicleSize: next || null })
+  const toggleVehicleSize = (id: string) => {
+    const next = activeVehicleSizes.includes(id)
+      ? activeVehicleSizes.filter((s) => s !== id)
+      : [...activeVehicleSizes, id]
+    setOptimisticVehicleSizes(next)
+    updateParams({ vehicleSizes: next.length ? next.join(',') : null })
   }
 
   const toggleInstantBook = () => {
@@ -150,27 +157,27 @@ export default function SearchFilters() {
   }
 
   const clearAll = () => {
-    setQuickFilterActive(null)
+    setOptimisticQuickFilters(null)
     setOptimisticAmenities(null)
-    setOptimisticEvChargerType(null)
-    setOptimisticVehicleSize(null)
+    setOptimisticEvChargerTypes(null)
+    setOptimisticVehicleSizes(null)
     setOptimisticInstantBook(null)
     const params = new URLSearchParams(searchParams.toString())
-    params.delete('filter')
+    params.delete('filters')
     params.delete('amenities')
-    params.delete('evChargerType')
+    params.delete('evChargerTypes')
     params.delete('maxPrice')
-    params.delete('vehicleSize')
+    params.delete('vehicleSizes')
     params.delete('instantBook')
     router.push(`/search?${params.toString()}`)
   }
 
   const activeCount =
-    (activeQuickFilter !== 'all' ? 1 : 0) +
+    activeQuickFilters.length +
     activeAmenities.length +
-    (activeEvChargerType ? 1 : 0) +
+    activeEvChargerTypes.length +
     (maxPrice > 0 ? 1 : 0) +
-    (activeVehicleSize ? 1 : 0) +
+    activeVehicleSizes.length +
     (activeInstantBook ? 1 : 0)
 
   return (
@@ -207,7 +214,7 @@ export default function SearchFilters() {
             >
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-car-neon to-car-electric" aria-hidden />
               <div className="pb-6 pt-4 space-y-6 pl-4">
-                {/* Quick filters (All, Nearby, Budget, etc.) */}
+                {/* Quick filters (All, Nearby, Budget, etc.) - multi-select, blue activation */}
                 <div>
                   <div className="flex flex-wrap gap-2">
                     {QUICK_FILTERS.map(({ id, label }) => (
@@ -215,11 +222,15 @@ export default function SearchFilters() {
                         key={id}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => setQuickFilter(id)}
+                        onClick={() => toggleQuickFilter(id)}
                         className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                          activeQuickFilter === id
-                            ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
+                          id === 'all'
+                            ? activeQuickFilters.length === 0
+                              ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
+                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
+                            : activeQuickFilters.includes(id)
+                              ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
+                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
                         }`}
                       >
                         {label}
@@ -252,11 +263,11 @@ export default function SearchFilters() {
                   </div>
                 </div>
 
-                {/* EV Charger Type (when EV Charger selected) */}
+                {/* EV Charger Type (when EV Charger selected) - same blue activation as amenity pills */}
                 {activeAmenities.includes('evCharging') && (
                   <div className="pt-2 border-t border-gray-100">
                     <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium flex items-center gap-1">
-                      <svg className="w-4 h-4 text-car-electric" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                       EV Charger Type
@@ -267,11 +278,11 @@ export default function SearchFilters() {
                           key={id}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => setEvChargerType(id)}
+                          onClick={() => toggleEvChargerType(id)}
                           className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                            activeEvChargerType === id
-                              ? 'bg-car-electric border-car-electric text-white shadow-[0_0_14px_rgba(52,199,89,0.5)]'
-                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-electric/50 hover:text-car-electric shadow-none'
+                            activeEvChargerTypes.includes(id)
+                              ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
+                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
                           }`}
                         >
                           {label}
@@ -281,7 +292,7 @@ export default function SearchFilters() {
                   </div>
                 )}
 
-                {/* Max price per hour */}
+                {/* Max price per hour - price pills for consistent blue activation style */}
                 <div className="pt-2 border-t border-gray-100">
                   <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium flex items-center gap-1">
                     <svg className="w-4 h-4 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -289,21 +300,26 @@ export default function SearchFilters() {
                     </svg>
                     Max Price/Hour
                   </p>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-semibold text-car-neon">{maxPrice > 0 ? `$${maxPrice}` : 'Any'}</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="50"
-                      step="5"
-                      value={maxPrice || 0}
-                      onChange={(e) => setMaxPrice(parseInt(e.target.value, 10))}
-                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-car-neon"
-                    />
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {[0, 5, 10, 15, 20, 25, 30, 40, 50].map((val) => (
+                      <motion.button
+                        key={val}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setMaxPrice(val)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
+                          maxPrice === val
+                            ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
+                        }`}
+                      >
+                        {val === 0 ? 'Any' : `$${val}`}
+                      </motion.button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Vehicle size */}
+                {/* Vehicle size - same blue activation as amenity pills, supports multiple */}
                 <div className="pt-2 border-t border-gray-100">
                   <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium flex items-center gap-1">
                     <svg className="w-4 h-4 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -318,11 +334,11 @@ export default function SearchFilters() {
                         key={id}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => setVehicleSize(id)}
+                        onClick={() => toggleVehicleSize(id)}
                         className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow capitalize ${
-                          activeVehicleSize === id
-                            ? 'bg-car-electric border-car-electric text-white shadow-[0_0_14px_rgba(52,199,89,0.5)]'
-                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-electric/50 hover:text-car-electric shadow-none'
+                          activeVehicleSizes.includes(id)
+                            ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
                         }`}
                       >
                         {label}

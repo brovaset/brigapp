@@ -37,11 +37,11 @@ export default function SearchPageClient({
 
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
-  const filter = searchParams.get('filter')
+  const filtersParam = searchParams.get('filters')?.split(',').filter(Boolean) ?? []
   const amenitiesParam = searchParams.get('amenities')?.split(',').filter(Boolean) ?? []
-  const evChargerType = searchParams.get('evChargerType') ?? ''
+  const evChargerTypesParam = searchParams.get('evChargerTypes')?.split(',').filter(Boolean) ?? []
   const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : 0
-  const vehicleSize = searchParams.get('vehicleSize') ?? ''
+  const vehicleSizesParam = searchParams.get('vehicleSizes')?.split(',').filter(Boolean) ?? []
   const instantBookFilter = searchParams.get('instantBook') === 'true'
 
   const parseAmenities = (a: string | undefined | null): ListingAmenities | null => {
@@ -76,7 +76,7 @@ export default function SearchPageClient({
       })
     }
 
-    if (amenitiesParam.length > 0 || evChargerType || maxPrice > 0 || vehicleSize || instantBookFilter) {
+    if (amenitiesParam.length > 0 || evChargerTypesParam.length > 0 || maxPrice > 0 || vehicleSizesParam.length > 0 || instantBookFilter) {
       filtered = filtered.filter((l: Listing) => {
         const amenities = parseAmenities((l as any).amenities)
         if (amenitiesParam.length > 0) {
@@ -89,54 +89,65 @@ export default function SearchPageClient({
             }
           }
         }
-        if (evChargerType && amenitiesParam.includes('evCharging')) {
+        if (evChargerTypesParam.length > 0 && amenitiesParam.includes('evCharging')) {
           const listingType = amenities?.evChargerType
           if (!listingType) return false
-          if (evChargerType === 'level1' && listingType !== 'level1') return false
-          if (evChargerType === 'level2' && listingType !== 'level2') return false
-          if (evChargerType === 'tesla' && listingType !== 'tesla') return false
+          const matchesAny = evChargerTypesParam.some((t) => {
+            if (t === 'level1') return listingType === 'level1'
+            if (t === 'level2') return listingType === 'level2'
+            if (t === 'tesla') return listingType === 'tesla'
+            return false
+          })
+          if (!matchesAny) return false
         }
         if (maxPrice > 0 && l.pricePerHour > maxPrice) return false
-        if (vehicleSize) {
+        if (vehicleSizesParam.length > 0) {
           const accommodates: Record<string, string[]> = {
             sedan: ['Sedan', 'SUV', 'Truck', 'Van'],
             suv: ['SUV', 'Truck', 'Van'],
             truck: ['Truck', 'Van'],
             van: ['Van'],
           }
-          const allowed = accommodates[vehicleSize.toLowerCase()]
-          if (!allowed || !l.maxVehicleSize || !allowed.includes(l.maxVehicleSize)) return false
+          const matchesAny = vehicleSizesParam.some((size) => {
+            const allowed = accommodates[size.toLowerCase()]
+            return allowed && l.maxVehicleSize && allowed.includes(l.maxVehicleSize)
+          })
+          if (!matchesAny) return false
         }
         if (instantBookFilter && !(l as any).instantBook) return false
         return true
       })
     }
 
-    if (filter) {
-      switch (filter) {
-        case 'nearby':
-          filtered = filtered.sort((a: Listing, b: Listing) =>
-            (a.distance ?? Infinity) - (b.distance ?? Infinity)
-          )
-          break
-        case 'cheap':
-          filtered = filtered.sort((a: Listing, b: Listing) => a.pricePerHour - b.pricePerHour)
-          break
-        case 'rated':
-          filtered = filtered
-            .filter((l: Listing) => (l.averageRating || 0) > 0)
-            .sort((a: Listing, b: Listing) => (b.averageRating || 0) - (a.averageRating || 0))
-          break
-        case 'large':
-          filtered = filtered.filter((l: Listing) =>
-            l.maxVehicleSize && ['SUV', 'Truck', 'Van'].includes(l.maxVehicleSize)
-          )
-          break
-        case 'instant':
-          filtered = filtered.filter((l: Listing) => l.isActive)
-          break
-        default:
-          break
+    if (filtersParam.length > 0) {
+      filtersParam.forEach((f) => {
+        switch (f) {
+          case 'large':
+            filtered = filtered.filter((l: Listing) =>
+              l.maxVehicleSize && ['SUV', 'Truck', 'Van'].includes(l.maxVehicleSize)
+            )
+            break
+          case 'instant':
+            filtered = filtered.filter((l: Listing) => l.isActive)
+            break
+          case 'rated':
+            filtered = filtered.filter((l: Listing) => (l.averageRating || 0) > 0)
+            break
+          default:
+            break
+        }
+      })
+      const hasNearby = filtersParam.includes('nearby')
+      const hasCheap = filtersParam.includes('cheap')
+      const hasRated = filtersParam.includes('rated')
+      if (hasRated) {
+        filtered = filtered.sort((a: Listing, b: Listing) => (b.averageRating || 0) - (a.averageRating || 0))
+      } else if (hasCheap) {
+        filtered = filtered.sort((a: Listing, b: Listing) => a.pricePerHour - b.pricePerHour)
+      } else if (hasNearby) {
+        filtered = filtered.sort((a: Listing, b: Listing) =>
+          (a.distance ?? Infinity) - (b.distance ?? Infinity)
+        )
       }
     } else if (lat && lng) {
       filtered = filtered.sort((a: Listing, b: Listing) =>
@@ -145,7 +156,7 @@ export default function SearchPageClient({
     }
 
     return filtered
-  }, [initialListings, lat, lng, filter, amenitiesParam, evChargerType, maxPrice, vehicleSize, instantBookFilter])
+  }, [initialListings, lat, lng, filtersParam, amenitiesParam, evChargerTypesParam, maxPrice, vehicleSizesParam, instantBookFilter])
 
   const mapListings = useMemo((): MapSearchListing[] => (
     listings.map((l) => ({
