@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency, parseResponseJson } from '@/lib/utils'
@@ -8,7 +8,7 @@ import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { motion } from 'framer-motion'
 
-export default function EarningsPage() {
+function EarningsContent() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -272,5 +272,19 @@ export default function EarningsPage() {
         </FloatingCard>
       </div>
     </div>
+  )
+}
+
+export default function EarningsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-car-neon border-t-transparent" />
+        </div>
+      }
+    >
+      <EarningsContent />
+    </Suspense>
   )
 }

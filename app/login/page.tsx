@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
@@ -12,7 +12,7 @@ import { Input, ErrorMessage, LoadingSpinner } from '@/components/ui'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { parseResponseJson, mapAuthError } from '@/lib/utils'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
@@ -166,5 +166,19 @@ export default function LoginPage() {
         </FloatingCard>
       </motion.div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-car-neon border-t-transparent" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   )
 }

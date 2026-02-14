@@ -8,6 +8,7 @@ import FloatingCard from '@/components/FloatingCard'
 import NeonButton from '@/components/NeonButton'
 import { Input, Textarea, Select, ErrorMessage, LoadingSpinner } from '@/components/ui'
 import { parseResponseJson } from '@/lib/utils'
+import type { Listing } from '@/types'
 
 const defaultFormData = {
   title: '',
@@ -75,7 +76,7 @@ export default function EditListingPage() {
     if (!user || !id) return
     fetch(`/api/listings/${id}`)
       .then(async (res) => {
-        const data = await parseResponseJson(res)
+        const data = await parseResponseJson<Listing & { cancellationPolicy?: string; houseRules?: string }>(res)
         if (!res.ok || !data?.id) {
           router.push('/host/listings')
           return null

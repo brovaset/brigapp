@@ -79,6 +79,9 @@ model Listing {
   ratings         Rating[]
   savedBy         SavedListing[]
   inquiryMessages Message[] @relation("InquiryMessages")
+
+  @@index([isActive])
+  @@index([hostId])
 }
 
 model BlockedDate {
@@ -114,6 +117,10 @@ model Booking {
   messages        Message[]
   driverRating    Rating?   @relation("DriverRatings")
   hostRating      Rating?   @relation("HostRatings")
+
+  @@index([driverId])
+  @@index([hostId])
+  @@index([listingId])
 }
 
 model Payment {
@@ -168,5 +175,9 @@ model Message {
   imageUrl    String?
   isRead      Boolean   @default(false)
   createdAt   DateTime @default(now())
+
+  @@index([listingId])
+  @@index([bookingId])
+  @@index([receiverId])
 }
 

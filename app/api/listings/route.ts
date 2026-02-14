@@ -22,10 +22,17 @@ export async function GET(request: NextRequest) {
     const radius = searchParams.get('radius') || '10' // km
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
+    const limitParam = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '50', 10)), 100)
+    const skipParam = Math.max(0, parseInt(searchParams.get('skip') || '0', 10))
 
     const includeBlockedDates = !!(startDate && endDate)
+    const hasFilters = includeBlockedDates || !!(lat && lng)
+    const take = hasFilters ? Math.min(limitParam * 5, 200) : limitParam
+
     let listings = await prisma.listing.findMany({
       where: { isActive: true },
+      take,
+      skip: hasFilters ? 0 : skipParam,
       include: {
         host: {
           select: {
@@ -70,6 +77,9 @@ export async function GET(request: NextRequest) {
         return distance <= radiusKm
       })
     }
+
+    // Apply limit after in-memory filters
+    listings = listings.slice(0, limitParam)
 
     // Calculate average ratings
     const listingsWithRatings = listings.map(listing => {
