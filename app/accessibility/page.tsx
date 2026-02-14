@@ -93,7 +93,7 @@ export default function AccessibilityPage() {
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">Text Scaling</h3>
               <p className="text-gray-600 text-sm mb-4">
-                All text can be scaled up to 200% without losing functionality. Use your browser's zoom feature or text size settings.
+                All text can be scaled up to 200% without losing functionality. Use your browser&apos;s zoom feature or text size settings.
               </p>
             </div>
           </div>

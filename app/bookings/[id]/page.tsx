@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { formatCurrency, parseResponseJson } from '@/lib/utils'
@@ -29,14 +30,7 @@ export default function BookingDetailsPage() {
   const [submittingRating, setSubmittingRating] = useState(false)
   const [licenseVerified, setLicenseVerified] = useState(false)
 
-  useEffect(() => {
-    fetchBooking()
-    if (searchParams.get('rate') === 'true') {
-      setShowRating(true)
-    }
-  }, [params.id, searchParams])
-
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     try {
       const res = await fetch(`/api/bookings/${params.id}`)
       const data = await parseResponseJson<{ booking?: Booking; error?: string }>(res)
@@ -57,7 +51,14 @@ export default function BookingDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, router])
+
+  useEffect(() => {
+    fetchBooking()
+    if (searchParams.get('rate') === 'true') {
+      setShowRating(true)
+    }
+  }, [params.id, searchParams, fetchBooking])
 
   const sendMessage = async () => {
     if (!message.trim() && !imagePreview) return
@@ -511,9 +512,11 @@ export default function BookingDetailsPage() {
                     </p>
                     {msg.imageUrl && (
                       <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer" className="block mb-2 rounded overflow-hidden max-w-[200px]">
-                        <img
+                        <Image
                           src={msg.imageUrl}
                           alt="Shared"
+                          width={200}
+                          height={200}
                           className="max-h-[200px] object-cover rounded"
                         />
                       </a>
@@ -532,9 +535,11 @@ export default function BookingDetailsPage() {
 
           {imagePreview && (
             <div className="mb-4 relative inline-block">
-              <img
+              <Image
                 src={imagePreview}
                 alt="Preview"
+                width={96}
+                height={96}
                 className="max-h-24 object-cover rounded-lg border border-gray-200"
               />
               <button

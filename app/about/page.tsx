@@ -50,7 +50,7 @@ export default function AboutPage() {
             BRIGAP was founded with a simple mission: to make parking easier, more accessible, and more efficient for everyone. We believe that unused parking spaces represent untapped value, and by connecting drivers with available spaces, we create a win-win solution for communities.
           </p>
           <p className="text-gray-600">
-            Whether you're a driver looking for convenient parking or a property owner wanting to monetize unused space, BRIGAP provides the platform and tools you need to succeed.
+            Whether you&apos;re a driver looking for convenient parking or a property owner wanting to monetize unused space, BRIGAP provides the platform and tools you need to succeed.
           </p>
         </FloatingCard>
 
@@ -87,7 +87,7 @@ export default function AboutPage() {
         <FloatingCard delay={0.8}>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Join Us</h2>
           <p className="text-gray-600 mb-6">
-            Whether you're looking for parking or have space to share, BRIGAP makes it easy to get started. Join thousands of users who are already making parking simpler and more efficient.
+            Whether you&apos;re looking for parking or have space to share, BRIGAP makes it easy to get started. Join thousands of users who are already making parking simpler and more efficient.
           </p>
           <div className="flex gap-4">
             <a

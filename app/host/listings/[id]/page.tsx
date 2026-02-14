@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
@@ -30,16 +30,7 @@ export default function ListingDetailPage() {
     reason: '',
   })
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchListing()
-    fetchBlockedDates()
-  }, [params.id, user, router])
-
-  const fetchListing = async () => {
+  const fetchListing = useCallback(async () => {
     try {
       const res = await fetch(`/api/listings/${params.id}`)
       const data = await parseResponseJson(res)
@@ -54,9 +45,9 @@ export default function ListingDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, router])
 
-  const fetchBlockedDates = async () => {
+  const fetchBlockedDates = useCallback(async () => {
     try {
       const res = await fetch(`/api/listings/${params.id}/blocked-dates`)
       const data = await parseResponseJson<{ blockedDates?: BlockedDate[] }>(res)
@@ -66,7 +57,16 @@ export default function ListingDetailPage() {
     } catch (error) {
       console.error('Error fetching blocked dates:', error)
     }
-  }
+  }, [params.id])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchListing()
+    fetchBlockedDates()
+  }, [user, router, fetchListing, fetchBlockedDates])
 
   const handleBlockDate = async () => {
     if (!blockForm.startDate || !blockForm.endDate) {

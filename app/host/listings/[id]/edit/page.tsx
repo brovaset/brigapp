@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { motion } from 'framer-motion'
@@ -244,7 +245,7 @@ export default function EditListingPage() {
                 <div className="flex flex-wrap gap-3 mb-2">
                   {formData.photos.map((url, i) => (
                     <div key={`${url}-${i}`} className="relative group">
-                      <img src={url} alt="" className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
+                      <Image src={url} alt="" width={96} height={96} className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
                       <button type="button" onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, j) => j !== i) })} className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Remove photo">×</button>
                     </div>
                   ))}

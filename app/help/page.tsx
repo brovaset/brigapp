@@ -128,7 +128,7 @@ export default function HelpPage() {
         >
           <h3 className="text-xl font-bold text-gray-900 mb-2">Still need help?</h3>
           <p className="text-gray-600 mb-4">
-            Can't find what you're looking for? Contact our support team.
+            Can&apos;t find what you&apos;re looking for? Contact our support team.
           </p>
           <Link
             href="mailto:support@brigap.com"
