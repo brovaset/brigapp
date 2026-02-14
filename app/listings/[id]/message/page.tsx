@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
@@ -38,7 +39,7 @@ export default function ListingMessagePage() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const fetchThread = async () => {
+  const fetchThread = useCallback(async () => {
     try {
       const url = withUserId
         ? `/api/listings/${listingId}/messages?with=${encodeURIComponent(withUserId)}`
@@ -66,7 +67,7 @@ export default function ListingMessagePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [listingId, withUserId, router])
 
   useEffect(() => {
     if (authLoading) return
@@ -75,7 +76,7 @@ export default function ListingMessagePage() {
       return
     }
     fetchThread()
-  }, [listingId, withUserId, user?.userId, authLoading])
+  }, [listingId, withUserId, user, authLoading, router, fetchThread])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -186,9 +187,11 @@ export default function ListingMessagePage() {
                         rel="noopener noreferrer"
                         className="block mb-2 rounded overflow-hidden max-w-[200px]"
                       >
-                        <img
+                        <Image
                           src={msg.imageUrl}
                           alt="Shared"
+                          width={200}
+                          height={200}
                           className="max-h-[200px] object-cover rounded"
                         />
                       </a>

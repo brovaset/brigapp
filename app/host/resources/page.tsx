@@ -142,7 +142,7 @@ export default function HostResourcesPage() {
           <FloatingCard delay={0.7}>
             <h3 className="text-xl font-bold text-gray-900 mb-3">View Your Earnings</h3>
             <p className="text-gray-600 mb-4">
-              Track your revenue and see how much you're earning.
+              Track your revenue and see how much you&apos;re earning.
             </p>
             <Link
               href="/host/earnings"

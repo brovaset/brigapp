@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
@@ -130,9 +131,11 @@ export default function ListingDetailClient({
           className="mb-8 rounded-2xl overflow-hidden bg-gray-200 aspect-[21/9] max-h-[400px]"
         >
           {mainPhoto ? (
-            <img
+            <Image
               src={mainPhoto}
               alt={listing.title}
+              width={840}
+              height={360}
               className="w-full h-full object-cover"
             />
           ) : (

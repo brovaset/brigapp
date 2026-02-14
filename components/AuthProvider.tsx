@@ -67,11 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
           .finally(() => setLoading(false))
       } else {
-        setLoading(false)
+        queueMicrotask(() => setLoading(false))
       }
     } catch (error) {
       console.error('Auth initialization error:', error)
-      setLoading(false)
+      queueMicrotask(() => setLoading(false))
     }
   }, [])
 

@@ -37,11 +37,23 @@ export default function SearchPageClient({
 
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
-  const filtersParam = searchParams.get('filters')?.split(',').filter(Boolean) ?? []
-  const amenitiesParam = searchParams.get('amenities')?.split(',').filter(Boolean) ?? []
-  const evChargerTypesParam = searchParams.get('evChargerTypes')?.split(',').filter(Boolean) ?? []
+  const filtersParam = useMemo(
+    () => searchParams.get('filters')?.split(',').filter(Boolean) ?? [],
+    [searchParams]
+  )
+  const amenitiesParam = useMemo(
+    () => searchParams.get('amenities')?.split(',').filter(Boolean) ?? [],
+    [searchParams]
+  )
+  const evChargerTypesParam = useMemo(
+    () => searchParams.get('evChargerTypes')?.split(',').filter(Boolean) ?? [],
+    [searchParams]
+  )
   const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : 0
-  const vehicleSizesParam = searchParams.get('vehicleSizes')?.split(',').filter(Boolean) ?? []
+  const vehicleSizesParam = useMemo(
+    () => searchParams.get('vehicleSizes')?.split(',').filter(Boolean) ?? [],
+    [searchParams]
+  )
   const instantBookFilter = searchParams.get('instantBook') === 'true'
 
   const parseAmenities = (a: string | undefined | null): ListingAmenities | null => {

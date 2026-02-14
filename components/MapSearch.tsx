@@ -151,6 +151,7 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
         navigator.geolocation.clearWatch(watchIdRef.current)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Map init: loadMap, updateMarkers, addUserMarker, loadListings are defined below; adding them causes init-order issues
   }, [])
 
   // Update markers when external listings prop changes
@@ -164,6 +165,7 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
       setListings(withDistance)
       updateMarkers(withDistance, mapInstanceRef.current)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentLocation, initialCenter, userLocation, updateMarkers are refs/stable; full deps cause unnecessary re-runs
   }, [listingsProp])
 
   const loadListings = async (lat: number, lng: number, mapInstance?: google.maps.Map) => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
@@ -32,6 +32,30 @@ export default function MessagesPageClient() {
     }
   }, [authLoading, user, router])
 
+  const fetchBookings = useCallback(async () => {
+    const res = await fetch('/api/bookings', { credentials: 'include' })
+    if (res.status === 401) {
+      router.push('/login')
+      return
+    }
+    const data = await parseResponseJson<{ bookings?: unknown[] }>(res)
+    if (data?.bookings) {
+      setBookings(data.bookings)
+    }
+  }, [router])
+
+  const fetchInquiries = useCallback(async () => {
+    const res = await fetch('/api/messages/inquiries', { credentials: 'include' })
+    if (res.status === 401) {
+      router.push('/login')
+      return
+    }
+    const data = await parseResponseJson<{ threads?: InquiryThread[] }>(res)
+    if (data?.threads) {
+      setInquiries(data.threads)
+    }
+  }, [router])
+
   useEffect(() => {
     const run = async () => {
       try {
@@ -43,31 +67,7 @@ export default function MessagesPageClient() {
       }
     }
     run()
-  }, [])
-
-  const fetchBookings = async () => {
-    const res = await fetch('/api/bookings', { credentials: 'include' })
-    if (res.status === 401) {
-      router.push('/login')
-      return
-    }
-    const data = await parseResponseJson<{ bookings?: unknown[] }>(res)
-    if (data?.bookings) {
-      setBookings(data.bookings)
-    }
-  }
-
-  const fetchInquiries = async () => {
-    const res = await fetch('/api/messages/inquiries', { credentials: 'include' })
-    if (res.status === 401) {
-      router.push('/login')
-      return
-    }
-    const data = await parseResponseJson<{ threads?: InquiryThread[] }>(res)
-    if (data?.threads) {
-      setInquiries(data.threads)
-    }
-  }
+  }, [fetchBookings, fetchInquiries])
 
   if (!authLoading && !user) {
     return null

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { motion } from 'framer-motion'
@@ -383,7 +384,7 @@ export default function NewListingPage() {
                 <div className="flex flex-wrap gap-3 mb-2">
                   {formData.photos.map((url, i) => (
                     <div key={url} className="relative group">
-                      <img src={url} alt="" className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
+                      <Image src={url} alt="" width={96} height={96} className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, j) => j !== i) })}

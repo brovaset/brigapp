@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
@@ -68,10 +69,12 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-300 hover:border-car-neon hover:shadow-md transition-all bg-white"
                   >
                     {user.profileImageUrl ? (
-                      <img
+                      <Image
                         src={user.profileImageUrl}
                         alt=""
-                        className="w-8 h-8 rounded-full object-cover shadow-sm"
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover shadow-sm"
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-car-neon to-car-electric flex items-center justify-center text-white font-semibold shadow-sm">

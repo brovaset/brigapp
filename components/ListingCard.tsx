@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { formatCurrency, parseResponseJson } from '@/lib/utils'
@@ -45,7 +46,7 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
       const saved = localStorage.getItem('savedListings')
       if (saved) {
         try {
-          setIsFavorite(JSON.parse(saved).includes(listing.id))
+          queueMicrotask(() => setIsFavorite(JSON.parse(saved).includes(listing.id)))
         } catch {}
       }
     }
@@ -92,11 +93,13 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
       >
         <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 border-2 border-gray-200/80 border-l-4 border-l-car-neon transition-all duration-300 bg-white shadow-md group-hover:shadow-xl group-hover:shadow-[0_8px_25px_rgba(0,122,255,0.12)] group-hover:border-car-neon/40 group-hover:border-l-car-electric">
           {imageUrl && !imageError ? (
-            <img
+            <Image
               src={imageUrl}
               alt={listing.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
               onError={() => setImageError(true)}
+              sizes="(max-width: 768px) 100vw, 33vw"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-car-neon/10 via-car-electric/5 to-car-neon/10 flex items-center justify-center">

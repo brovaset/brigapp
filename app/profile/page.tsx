@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { motion } from 'framer-motion'
@@ -176,9 +177,11 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
               <div className="relative">
                 {profileData.profileImageUrl ? (
-                  <img
+                  <Image
                     src={profileData.profileImageUrl}
                     alt="Profile"
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
                   />
                 ) : (

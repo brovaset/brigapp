@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import Link from 'next/link'
@@ -19,16 +19,7 @@ export default function HostListingsPage() {
   const [error, setError] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    fetchListings()
-  }, [user, router])
-
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       const res = await fetch('/api/listings')
       const data = await parseResponseJson<{ listings?: Listing[] }>(res)
@@ -46,7 +37,15 @@ export default function HostListingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.userId])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchListings()
+  }, [user, router, fetchListings])
 
   const handleDelete = async (id: string) => {
     try {

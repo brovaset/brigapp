@@ -158,7 +158,7 @@ function LoginContent() {
             transition={{ delay: 0.6 }}
             className="mt-6 text-center text-sm text-gray-600"
           >
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-car-neon hover:text-car-electric transition-colors font-medium">
               Sign up
             </Link>

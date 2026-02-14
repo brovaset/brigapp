@@ -66,19 +66,19 @@ export default function SearchFilters() {
   const instantBookFromUrl = searchParams.get('instantBook') ?? ''
 
   useEffect(() => {
-    setOptimisticQuickFilters(null)
+    queueMicrotask(() => setOptimisticQuickFilters(null))
   }, [filtersFromUrl])
   useEffect(() => {
-    setOptimisticAmenities(null)
+    queueMicrotask(() => setOptimisticAmenities(null))
   }, [amenitiesFromUrl])
   useEffect(() => {
-    setOptimisticEvChargerTypes(null)
+    queueMicrotask(() => setOptimisticEvChargerTypes(null))
   }, [evChargerTypesFromUrl])
   useEffect(() => {
-    setOptimisticVehicleSizes(null)
+    queueMicrotask(() => setOptimisticVehicleSizes(null))
   }, [vehicleSizesFromUrl])
   useEffect(() => {
-    setOptimisticInstantBook(null)
+    queueMicrotask(() => setOptimisticInstantBook(null))
   }, [instantBookFromUrl])
 
   useEffect(() => {
