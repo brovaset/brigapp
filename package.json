@@ -1,12 +1,15 @@
 {
   "name": "brigap",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "npx eslint .",
+    "lint": "npx eslint . --config eslint.config.mjs",
     "test": "pytest tests/api -v -m api",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
