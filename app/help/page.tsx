@@ -11,7 +11,7 @@ export default function HelpPage() {
       questions: [
         {
           q: 'How do I create an account?',
-          a: 'Click "Sign Up" in the navigation bar or visit the registration page. You can choose to be a Driver, Host, or Both. Fill in your details and you\'ll be ready to start!'
+          a: 'Click "Sign Up" in the navigation bar or visit the registration page. You can choose to be a Driver, Host, or Both. Fill in your details and you&apos;ll be ready to start!'
         },
         {
           q: 'How do I find parking?',
@@ -19,7 +19,7 @@ export default function HelpPage() {
         },
         {
           q: 'How do I list my parking space?',
-          a: 'If you\'re a Host, go to your Dashboard and click "Create New Listing". Fill in your parking space details, set your prices, and start earning!'
+          a: 'If you&apos;re a Host, go to your Dashboard and click "Create New Listing". Fill in your parking space details, set your prices, and start earning!'
         }
       ]
     },
@@ -28,7 +28,7 @@ export default function HelpPage() {
       questions: [
         {
           q: 'How do I book a parking spot?',
-          a: 'Search for available spots, select one that fits your needs, choose your dates and times, enter your vehicle information, and proceed to payment. You\'ll receive a confirmation once payment is processed.'
+          a: 'Search for available spots, select one that fits your needs, choose your dates and times, enter your vehicle information, and proceed to payment. You&apos;ll receive a confirmation once payment is processed.'
         },
         {
           q: 'What payment methods are accepted?',
@@ -36,7 +36,7 @@ export default function HelpPage() {
         },
         {
           q: 'Can I cancel a booking?',
-          a: 'Cancellation policies vary by listing. Check the listing details before booking. You can cancel from your Bookings page, and refunds will be processed according to the host\'s cancellation policy.'
+          a: 'Cancellation policies vary by listing. Check the listing details before booking. You can cancel from your Bookings page, and refunds will be processed according to the host&apos;s cancellation policy.'
         },
         {
           q: 'How do I extend my parking time?',
@@ -60,7 +60,7 @@ export default function HelpPage() {
           a: 'Go to your listing details page and use the "Block Dates" feature. Select the dates you want to block and optionally add a reason.'
         },
         {
-          q: 'What if a driver doesn\'t show up?',
+          q: 'What if a driver doesn&apos;t show up?',
           a: 'If a driver doesn\'t arrive within the booking window, you can report it through the booking details page. Our support team will review and handle the situation.'
         }
       ]
@@ -73,7 +73,7 @@ export default function HelpPage() {
           a: 'We use industry-standard encryption and secure payment processing through Stripe. Your payment information is never stored on our servers.'
         },
         {
-          q: 'What if there\'s damage to my vehicle?',
+          q: 'What if there&apos;s damage to my vehicle?',
           a: 'Contact support immediately if you experience any issues. We recommend taking photos before and after parking. Our support team will help resolve disputes.'
         },
         {
@@ -111,8 +111,8 @@ export default function HelpPage() {
                     transition={{ delay: sectionIndex * 0.1 + index * 0.05 }}
                     className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
                   >
-                    <h3 className="font-semibold text-gray-900 mb-2">{faq.q}</h3>
-                    <p className="text-gray-600">{faq.a}</p>
+                    <h3 className="font-semibold text-gray-900 mb-2" dangerouslySetInnerHTML={{ __html: faq.q }} />
+                    <p className="text-gray-600" dangerouslySetInnerHTML={{ __html: faq.a }} />
                   </motion.div>
                 ))}
               </div>

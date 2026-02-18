@@ -3,9 +3,6 @@ const path = require('path')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true, // ESLint runs in CI via `npm run lint`; avoids build failing on lint
-  },
   images: {
     remotePatterns: [
       {
