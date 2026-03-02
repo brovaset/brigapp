@@ -23,16 +23,24 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.replit.dev',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.repl.co',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
-  // Enable standalone output for Docker
-  output: 'standalone',
   turbopack: {
     root: path.join(__dirname),
   },
-  // Compress responses
   compress: true,
-  // Security headers are handled in middleware
   async headers() {
     return [
       {
@@ -41,10 +49,6 @@ const nextConfig = {
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
           },
           {
             key: 'X-XSS-Protection',
@@ -57,4 +61,3 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
-
