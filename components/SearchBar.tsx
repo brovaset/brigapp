@@ -157,7 +157,7 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ scale: 1.01 }}
-        className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-gray-200/80 overflow-hidden transition-all duration-300 focus-within:border-car-neon/50 focus-within:shadow-[0_8px_30px_rgba(0,122,255,0.12)]"
+        className="bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-gray-200/60 overflow-hidden transition-all duration-300 focus-within:border-car-neon focus-within:shadow-[0_12px_40px_rgba(0,122,255,0.15)]"
       >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
           <div className="border-b md:border-b-0 md:border-r border-gray-200 p-4 hover:bg-gray-50 transition-colors">

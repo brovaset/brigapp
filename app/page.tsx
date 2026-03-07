@@ -55,38 +55,59 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       {/* Hero Section with Search */}
-      <div className="relative bg-gradient-to-b from-gray-50/90 via-white to-gray-50/90 pb-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+      <div className="relative bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 overflow-hidden pt-20">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-car-neon/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-72 h-72 bg-car-electric/10 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-6 flex justify-center"
+              transition={{ delay: 0.15, duration: 0.5 }}
+              className="mb-8 flex justify-center"
             >
-              <Logo size="lg" showText={false} />
+              <div className="relative">
+                <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-car-neon to-car-electric opacity-20" />
+                <Logo size="lg" showText={false} />
+              </div>
             </motion.div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
-              Find parking near you
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Discover driveways, parking spots, and spaces available for rent in your area
-            </p>
+            
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-5xl sm:text-6xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-car-neon to-gray-900 mb-6 tracking-tight leading-tight"
+            >
+              Find Your Perfect Parking
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium"
+            >
+              Discover secure parking spaces, garages, and driveways available for rent in your area. Book instantly with confidence.
+            </motion.p>
           </motion.div>
 
           {/* Search Bar */}
-          <Suspense fallback={<div className="h-14 max-w-5xl mx-auto rounded-xl bg-gray-100 animate-pulse" />}>
+          <Suspense fallback={<div className="h-20 max-w-4xl mx-auto rounded-2xl bg-gray-200 animate-pulse" />}>
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="max-w-5xl mx-auto"
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="max-w-4xl mx-auto"
             >
               <SearchBar />
             </motion.div>

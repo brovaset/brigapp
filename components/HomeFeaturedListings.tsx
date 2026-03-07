@@ -16,16 +16,19 @@ export default function HomeFeaturedListings({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-          Explore parking spaces
-        </h2>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-12">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-2">
+            Discover Popular Spaces
+          </h2>
+          <p className="text-gray-600 font-medium">Browse verified parking options near you</p>
+        </div>
         <motion.button
           onClick={() => router.push('/search')}
-          whileHover={{ x: 4 }}
-          className="text-car-neon hover:text-car-electric font-semibold text-sm underline transition-colors"
+          whileHover={{ x: 6, scale: 1.05 }}
+          className="px-6 py-2 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-full font-semibold text-sm shadow-lg shadow-car-neon/20 hover:shadow-xl transition-all"
         >
-          Show all
+          Explore All →
         </motion.button>
       </div>
 

@@ -8,11 +8,19 @@ export default function HomeFeaturesSection() {
 
   return (
     <>
-      <div className="bg-gray-50/80 py-20 mt-20 border-t border-gray-200/80">
+      <div className="bg-gradient-to-b from-white via-blue-50/30 to-white py-24 mt-24 border-t border-gray-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-14 tracking-tight">
-            Why choose BRIGAP?
-          </h2>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+              Why Choose BRIGAP?
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Experience the easiest way to find and book parking</p>
+          </motion.div>
           <div className="grid md:grid-cols-3 gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -71,29 +79,43 @@ export default function HomeFeaturesSection() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-car-neon/8 via-car-electric/12 to-car-neon/8 py-16 mt-16 border-t border-gray-200/80 relative overflow-hidden">
-        <div className="absolute inset-0 headlight-beam" />
+      <div className="bg-gradient-to-r from-car-neon/5 via-car-electric/8 to-car-neon/5 py-20 mt-24 border-t border-gray-200/50 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-car-neon/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-car-electric/10 rounded-full blur-3xl" />
+        </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Ready to get started?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
+          >
+            Ready to Get Started?
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-xl text-gray-600 mb-10 font-medium"
+          >
             Join thousands of drivers and hosts already using BRIGAP
-          </p>
-          <div className="flex gap-4 justify-center">
+          </motion.p>
+          <div className="flex gap-4 justify-center flex-wrap">
             <motion.button
               onClick={() => router.push('/register?role=driver')}
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -3 }}
               whileTap={{ scale: 0.98 }}
-              className="px-8 py-3 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              className="px-10 py-4 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-full font-semibold shadow-xl shadow-car-neon/30 hover:shadow-2xl transition-all duration-200 text-lg"
             >
-              Find Parking
+              Find Parking Now
             </motion.button>
             <motion.button
               onClick={() => router.push('/register?role=host')}
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -3 }}
               whileTap={{ scale: 0.98 }}
-              className="px-8 py-3 bg-white text-car-neon rounded-lg border-2 border-car-neon/50 font-semibold shadow-md hover:bg-car-neon/5 hover:border-car-neon transition-all duration-200"
+              className="px-10 py-4 bg-white text-car-neon rounded-full border-2 border-car-neon font-semibold shadow-lg hover:bg-car-neon/5 transition-all duration-200 text-lg"
             >
               List Your Space
             </motion.button>

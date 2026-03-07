@@ -91,7 +91,7 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
         whileHover={{ y: -4 }}
         className="group cursor-pointer"
       >
-        <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 border-2 border-gray-200/80 border-l-4 border-l-car-neon transition-all duration-300 bg-white shadow-md group-hover:shadow-xl group-hover:shadow-[0_8px_25px_rgba(0,122,255,0.12)] group-hover:border-car-neon/40 group-hover:border-l-car-electric">
+        <div className="relative w-full aspect-square rounded-2xl overflow-hidden mb-4 border-2 border-gray-200 transition-all duration-300 bg-white shadow-lg group-hover:shadow-2xl group-hover:shadow-[0_12px_35px_rgba(0,122,255,0.18)] group-hover:border-car-neon/50">
           {imageUrl && !imageError ? (
             <Image
               src={imageUrl}
