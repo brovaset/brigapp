@@ -42,10 +42,9 @@ export default function BookingDetailsPage() {
       }
 
       setBooking(data.booking)
-      // Check if rating already exists
-      if (data.booking?.driverRating || data.booking?.hostRating) {
-        setShowRating(false)
-      }
+      // Check if current user has already rated this booking
+      const userHasRated = data.booking?.ratings?.some((r: any) => r.giverId === user?.userId)
+      setShowRating(!userHasRated)
     } catch (error) {
       console.error('Error fetching booking:', error)
     } finally {
@@ -413,7 +412,7 @@ export default function BookingDetailsPage() {
           )}
 
           {/* Rating Section */}
-          {booking.status === 'COMPLETED' && !booking.driverRating && !booking.hostRating && (
+          {booking.status === 'COMPLETED' && (
             <div className="mb-6">
               {!showRating ? (
                 <NeonButton

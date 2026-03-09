@@ -36,6 +36,9 @@ model User {
   messages      Message[] @relation("SenderMessages")
   receivedMessages Message[] @relation("ReceiverMessages")
   savedListings SavedListing[]
+  
+  // Ratings given by this user
+  ratingsGiven  Rating[]  @relation("GivenRatings")
 }
 
 model SavedListing {
@@ -115,8 +118,7 @@ model Booking {
 
   payment         Payment?
   messages        Message[]
-  driverRating    Rating?   @relation("DriverRatings")
-  hostRating      Rating?   @relation("HostRatings")
+  ratings         Rating[]
 
   @@index([driverId])
   @@index([hostId])
@@ -146,19 +148,24 @@ model Payout {
 
 model Rating {
   id          String   @id @default(cuid())
-  bookingId  String   @unique
-  booking    Booking  @relation(name: "DriverRatings", fields: [bookingId], references: [id], onDelete: Cascade)
-  bookingHostId String? @unique
-  bookingHost Booking? @relation(name: "HostRatings", fields: [bookingHostId], references: [id], onDelete: Cascade)
-  driverId   String
-  driver     User     @relation("DriverRatings", fields: [driverId], references: [id], onDelete: Cascade)
-  hostId     String
-  host       User     @relation("HostRatings", fields: [hostId], references: [id], onDelete: Cascade)
-  listingId  String
-  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  rating     Int      // 1-5 stars
-  comment    String?
-  createdAt  DateTime @default(now())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  driverId    String
+  driver      User     @relation("DriverRatings", fields: [driverId], references: [id], onDelete: Cascade)
+  hostId      String
+  host        User     @relation("HostRatings", fields: [hostId], references: [id], onDelete: Cascade)
+  giverId     String   // Who gave the rating: driverId or hostId
+  giver       User     @relation("GivenRatings", fields: [giverId], references: [id], onDelete: Cascade)
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  rating      Int      // 1-5 stars
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([bookingId, giverId])
+  @@index([driverId])
+  @@index([hostId])
+  @@index([listingId])
 }
 
 model Message {

@@ -74,12 +74,7 @@ export async function POST(request: NextRequest) {
     const existingRating = await prisma.rating.findFirst({
       where: {
         bookingId,
-        OR: [
-          // If driver is rating, check if driver has already rated
-          ...(isDriver ? [{ driverId: session.userId }] : []),
-          // If host is rating, check if host has already rated
-          ...(isHost ? [{ hostId: session.userId }] : []),
-        ],
+        giverId: session.userId,
       },
     })
 
@@ -90,15 +85,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create rating
-    // Note: The schema has bookingId as unique, so we'll use one rating record
-    // but track who gave the rating. For true two-way ratings, the schema would need
-    // to be updated to allow multiple ratings per booking.
+    // Create rating - supports both driver and host rating the same booking
     const newRating = await prisma.rating.create({
       data: {
         bookingId,
         driverId: booking.driverId,
         hostId: booking.hostId,
+        giverId: session.userId, // Track who gave the rating
         listingId: booking.listingId,
         rating: Number(rating),
         comment: sanitizedComment,
