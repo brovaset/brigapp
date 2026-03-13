@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, generateToken } from '@/lib/auth'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 import {
   isValidEmail,
   isValidPassword,
@@ -12,6 +13,9 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.auth, 'auth:register')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     let body
     try {
       body = await request.json()

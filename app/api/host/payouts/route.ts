@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 /**
  * POST - Cash out available earnings to host's connected Stripe account.
  */
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:payouts')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {
@@ -107,6 +111,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.read, 'read:payouts')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {

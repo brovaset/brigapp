@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 export async function GET(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.read, 'read:saved')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {
@@ -73,6 +77,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:saved')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {
@@ -115,6 +122,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:saved')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {

@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:payments')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {

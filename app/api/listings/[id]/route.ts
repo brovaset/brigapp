@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { geocodeAddress } from '@/lib/geocode'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 import {
   sanitizeRequired,
   sanitizeStringMax,
@@ -17,6 +18,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = rateLimit(request, LIMITS.read, 'read:listings:id')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const { id } = await params
     const listing = await prisma.listing.findUnique({
       where: { id },
@@ -73,6 +77,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:listings:id')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const { id } = await params
     const session = await getServerSession()
 

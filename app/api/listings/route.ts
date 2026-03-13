@@ -3,6 +3,7 @@ import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { calculateDistance } from '@/lib/utils'
 import { geocodeAddress } from '@/lib/geocode'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 import {
   sanitizeRequired,
   sanitizeStringMax,
@@ -25,6 +26,9 @@ function parsePhotos(photos: string | undefined): string[] {
 
 export async function GET(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.read, 'read:listings')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const { searchParams } = new URL(request.url)
     const lat = searchParams.get('lat')
     const lng = searchParams.get('lng')
@@ -114,6 +118,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:listings')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {

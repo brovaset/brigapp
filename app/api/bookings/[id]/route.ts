@@ -3,12 +3,16 @@ import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { calculateBookingPrice } from '@/lib/utils'
 import { validateBookingDates, validateEnum, ALLOWED_BOOKING_STATUSES } from '@/lib/validation'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = rateLimit(request, LIMITS.read, 'read:bookings:id')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const { id } = await params
     const session = await getServerSession()
 
@@ -81,6 +85,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:bookings:id')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const { id } = await params
     const session = await getServerSession()
 

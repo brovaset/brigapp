@@ -4,9 +4,13 @@ import { prisma } from '@/lib/prisma'
 import { calculateBookingPrice } from '@/lib/utils'
 import { validateBookingDates, validateLicensePlate, sanitizeString } from '@/lib/validation'
 import { ValidationError, handleApiError } from '@/lib/errors'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 export async function GET(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.read, 'read:bookings')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {
@@ -70,6 +74,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.write, 'write:bookings')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
 
     if (!session) {

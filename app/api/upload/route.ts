@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -18,6 +19,9 @@ function getExt(mime: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.upload, 'upload:files')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     const session = await getServerSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

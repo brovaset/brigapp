@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyGoogleToken, generateToken } from '@/lib/auth'
 import { sanitizeRequired } from '@/lib/validation'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimit(request, LIMITS.auth, 'auth:google')
+    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
     let body
     try {
       body = await request.json()
