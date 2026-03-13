@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { calculateBookingPrice } from '@/lib/utils'
-import { validateBookingDates } from '@/lib/validation'
+import { validateBookingDates, validateEnum, ALLOWED_BOOKING_STATUSES } from '@/lib/validation'
 
 export async function GET(
   request: NextRequest,
@@ -51,8 +51,7 @@ export async function GET(
           },
           orderBy: { createdAt: 'asc' },
         },
-        driverRating: true,
-        hostRating: true,
+        ratings: true,
       },
     })
 
@@ -112,9 +111,8 @@ export async function PATCH(
 
     const { status, endTime } = body
 
-    // Allow extending booking
+    // Allow extending booking end time (driver only)
     if (endTime && booking.driverId === session.userId) {
-      // Validate new end time
       const dateValidation = validateBookingDates(booking.startTime, endTime)
       if (!dateValidation.valid) {
         return NextResponse.json(
@@ -122,6 +120,7 @@ export async function PATCH(
           { status: 400 }
         )
       }
+
       const listing = await prisma.listing.findUnique({
         where: { id: booking.listingId },
       })
@@ -152,8 +151,28 @@ export async function PATCH(
       return NextResponse.json({ booking: updatedBooking })
     }
 
-    // Allow status updates
+    // Allow status updates — validate against allowed enum values
     if (status) {
+      if (!validateEnum(status, ALLOWED_BOOKING_STATUSES)) {
+        return NextResponse.json(
+          { error: `Invalid status. Must be one of: ${ALLOWED_BOOKING_STATUSES.join(', ')}` },
+          { status: 400 }
+        )
+      }
+
+      // Enforce permission rules per status
+      if (status === 'CONFIRMED' || status === 'ACTIVE' || status === 'COMPLETED') {
+        if (booking.hostId !== session.userId) {
+          return NextResponse.json({ error: 'Only the host can set this status' }, { status: 403 })
+        }
+      }
+
+      if (status === 'CANCELLED') {
+        if (booking.driverId !== session.userId && booking.hostId !== session.userId) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+      }
+
       const updatedBooking = await prisma.booking.update({
         where: { id },
         data: { status },
@@ -171,4 +190,3 @@ export async function PATCH(
     )
   }
 }
-

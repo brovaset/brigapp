@@ -35,3 +35,33 @@ Brigap is a Next.js 16 web application for discovering and booking parking space
 - Target: autoscale
 - Build: `npm run build`
 - Start: `npm run start`
+
+## Security — Input Sanitization (lib/validation.ts)
+All user-facing inputs go through `lib/validation.ts` helpers before reaching the database:
+
+| Helper | Purpose |
+|--------|---------|
+| `sanitizeString(s)` | Strips HTML tags, null bytes, control chars, dangerous URI schemes; trims whitespace |
+| `sanitizeStringMax(v, n)` | Same as above + enforces max length; returns null if blank |
+| `sanitizeRequired(v, n)` | Same as `sanitizeStringMax`; returns null if result is empty |
+| `validateEnum(v, allowed)` | Type-guard that checks value against an allowed set |
+| `validateNumber(v, min, max)` | Parses and range-validates numbers; returns null on failure |
+| `isValidUploadUrl(url)` | Allows only `/uploads/(listing|profile|message)/…` paths |
+
+### Coverage per route
+| Route | Sanitized fields |
+|-------|-----------------|
+| `POST /api/auth/register` | firstName, lastName (max 60), email, password strength, phone format, role enum |
+| `POST /api/auth/google` | firstName, lastName from Google token |
+| `POST /api/listings` | All text fields with max lengths, prices (0.01–9999), cancellationPolicy enum, vehicleSize enum, photos URL-validated |
+| `PUT /api/listings/[id]` | Same as POST on any provided field |
+| `POST /api/bookings` | vehicleMake, vehicleModel, licensePlate, dates validated |
+| `PATCH /api/bookings/[id]` | status validated against `CONFIRMED|CANCELLED|ACTIVE|COMPLETED`; permission enforced per status |
+| `POST /api/ratings` | rating 1–5 integer, comment max 1000 chars, must be COMPLETED booking |
+| `POST /api/messages` | content max 1000 chars, imageUrl must match upload path pattern |
+
+## Ratings — Two-Way System
+Both drivers and hosts can independently rate the same booking:
+- `Rating` model has `giverId` to track who rated
+- `@@unique([bookingId, giverId])` prevents duplicate ratings per user per booking
+- Booking detail page shows a "Already rated" confirmation when the current user has submitted a rating

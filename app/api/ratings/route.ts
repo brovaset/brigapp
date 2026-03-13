@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { sanitizeString } from '@/lib/validation'
+import { sanitizeStringMax, validateNumber } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,45 +14,36 @@ export async function POST(request: NextRequest) {
     let body
     try {
       body = await request.json()
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      )
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 })
     }
 
     const { bookingId, rating, comment } = body
 
-    if (!bookingId || !rating || rating < 1 || rating > 5) {
+    if (!bookingId) {
+      return NextResponse.json({ error: 'Booking ID required' }, { status: 400 })
+    }
+
+    // Validate rating (1–5 integer)
+    const ratingValue = validateNumber(rating, 1, 5)
+    if (ratingValue == null) {
       return NextResponse.json(
-        { error: 'Valid booking ID and rating (1-5) required' },
+        { error: 'Rating must be an integer between 1 and 5' },
         { status: 400 }
       )
     }
+    const ratingInt = Math.round(ratingValue)
 
-    // Validate and sanitize comment if provided
-    const sanitizedComment = comment ? sanitizeString(comment) : null
-    if (sanitizedComment && sanitizedComment.length > 500) {
-      return NextResponse.json(
-        { error: 'Comment too long (max 500 characters)' },
-        { status: 400 }
-      )
-    }
+    // Sanitize optional comment
+    const sanitizedComment = sanitizeStringMax(comment, 1000)
 
-    // Get booking
+    // Get booking and verify participant
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
     })
 
     if (!booking) {
-      return NextResponse.json(
-        { error: 'Booking not found' },
-        { status: 404 }
-      )
-    }
-
-    if (booking.driverId !== session.userId && booking.hostId !== session.userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
     if (booking.status !== 'COMPLETED') {
@@ -85,15 +76,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create rating - supports both driver and host rating the same booking
+    // Create rating — supports both driver and host rating the same booking
     const newRating = await prisma.rating.create({
       data: {
         bookingId,
         driverId: booking.driverId,
         hostId: booking.hostId,
-        giverId: session.userId, // Track who gave the rating
+        giverId: session.userId,
         listingId: booking.listingId,
-        rating: Number(rating),
+        rating: ratingInt,
         comment: sanitizedComment,
       },
     })
@@ -107,4 +98,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

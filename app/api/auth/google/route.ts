@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyGoogleToken, generateToken } from '@/lib/auth'
+import { sanitizeRequired } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +34,12 @@ export async function POST(request: NextRequest) {
     }
 
     const email = googleUser.email.toLowerCase().trim()
-    const firstName = googleUser.given_name || email.split('@')[0]
-    const lastName = googleUser.family_name || ''
+
+    // Sanitize name fields from Google token
+    const rawFirst = googleUser.given_name || email.split('@')[0]
+    const rawLast = googleUser.family_name || ''
+    const firstName = sanitizeRequired(rawFirst, 60) || email.split('@')[0].slice(0, 60)
+    const lastName = sanitizeRequired(rawLast, 60) || ''
 
     let user = await prisma.user.findFirst({
       where: {

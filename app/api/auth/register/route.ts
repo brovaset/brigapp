@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, generateToken } from '@/lib/auth'
-import { isValidEmail, isValidPassword, validatePhoneNumber, sanitizeString } from '@/lib/validation'
+import {
+  isValidEmail,
+  isValidPassword,
+  validatePhoneNumber,
+  sanitizeRequired,
+  validateEnum,
+  ALLOWED_ROLES,
+} from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +22,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password, firstName, lastName, phone, role } = body
+    const { email, password, phone, role } = body
+
+    // Sanitize name fields
+    const firstName = sanitizeRequired(body.firstName, 60)
+    const lastName = sanitizeRequired(body.lastName, 60)
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
@@ -48,6 +59,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate role enum
+    const validRole = validateEnum(role, ALLOWED_ROLES) ? role : 'BOTH'
+
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
@@ -68,10 +82,10 @@ export async function POST(request: NextRequest) {
       data: {
         email: email.toLowerCase().trim(),
         password: hashedPassword,
-        firstName: sanitizeString(firstName),
-        lastName: sanitizeString(lastName),
-        phone: phone ? phone.trim() : null,
-        role: role || 'BOTH',
+        firstName,
+        lastName,
+        phone: phone ? phone.trim().slice(0, 20) : null,
+        role: validRole,
       },
     })
 
@@ -98,7 +112,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
     })
 
     return response
@@ -110,4 +124,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

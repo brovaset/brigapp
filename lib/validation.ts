@@ -1,8 +1,13 @@
-// Validation utilities
+// Validation and sanitization utilities
+
+const ALLOWED_ROLES = ['DRIVER', 'HOST', 'BOTH'] as const
+const ALLOWED_BOOKING_STATUSES = ['CONFIRMED', 'CANCELLED', 'ACTIVE', 'COMPLETED'] as const
+const ALLOWED_CANCELLATION_POLICIES = ['FLEXIBLE', 'MODERATE', 'STRICT'] as const
+const ALLOWED_VEHICLE_SIZES = ['SEDAN', 'SUV', 'TRUCK', 'VAN', 'MOTORCYCLE', 'OTHER', ''] as const
 
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
+  return emailRegex.test(email) && email.length <= 254
 }
 
 export function isValidPassword(password: string): boolean {
@@ -15,8 +20,73 @@ export function isValidDateRange(startDate: Date, endDate: Date): boolean {
   return startDate < endDate && startDate > new Date()
 }
 
+/**
+ * Strips HTML/script tags and dangerous characters, trims whitespace.
+ */
 export function sanitizeString(input: string): string {
-  return input.trim().replace(/[<>]/g, '')
+  if (!input || typeof input !== 'string') return ''
+  return input
+    .trim()
+    // Strip HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Remove null bytes and control characters except newlines/tabs
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    // Neutralise javascript: and data: URIs inside text
+    .replace(/javascript:/gi, '')
+    .replace(/data:/gi, '')
+    .replace(/vbscript:/gi, '')
+}
+
+/**
+ * Sanitise and enforce a maximum length. Returns null if blank after sanitisation.
+ */
+export function sanitizeStringMax(input: unknown, maxLen: number): string | null {
+  if (input == null || input === '') return null
+  const s = sanitizeString(String(input))
+  if (!s) return null
+  return s.slice(0, maxLen)
+}
+
+/**
+ * Sanitise a required string field with a max length.
+ * Returns the sanitised string or null if empty.
+ */
+export function sanitizeRequired(input: unknown, maxLen: number): string | null {
+  const s = sanitizeStringMax(input, maxLen)
+  return s && s.length > 0 ? s : null
+}
+
+/**
+ * Validate a value against an allowed set.
+ */
+export function validateEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[]
+): value is T {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
+}
+
+/**
+ * Parse a number and validate it within optional min/max bounds.
+ */
+export function validateNumber(
+  value: unknown,
+  min?: number,
+  max?: number
+): number | null {
+  const n = typeof value === 'number' ? value : parseFloat(String(value))
+  if (isNaN(n)) return null
+  if (min !== undefined && n < min) return null
+  if (max !== undefined && n > max) return null
+  return n
+}
+
+/**
+ * Validate that a URL is from the expected local uploads path.
+ */
+export function isValidUploadUrl(url: unknown): boolean {
+  if (typeof url !== 'string') return false
+  return /^\/uploads\/(listing|profile|message)\/[a-zA-Z0-9_\-.]+$/.test(url)
 }
 
 export function validateBookingDates(
@@ -39,7 +109,6 @@ export function validateBookingDates(
     return { valid: false, error: 'Start time must be in the future' }
   }
 
-  // Check if booking is too far in the future (e.g., 1 year)
   const maxFutureDate = new Date()
   maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 1)
   if (start > maxFutureDate) {
@@ -50,15 +119,14 @@ export function validateBookingDates(
 }
 
 export function validateLicensePlate(plate: string): boolean {
-  // Basic validation - alphanumeric, 2-8 characters
   const plateRegex = /^[A-Z0-9]{2,8}$/i
   return plateRegex.test(plate.trim())
 }
 
 export function validatePhoneNumber(phone: string | null | undefined): boolean {
-  if (!phone) return true // Optional field
-  // Basic phone validation - digits, dashes, parentheses, spaces
-  const phoneRegex = /^[\d\s\-\(\)\+]{10,}$/
+  if (!phone) return true
+  const phoneRegex = /^[\d\s\-\(\)\+]{7,20}$/
   return phoneRegex.test(phone.replace(/\s/g, ''))
 }
 
+export { ALLOWED_ROLES, ALLOWED_BOOKING_STATUSES, ALLOWED_CANCELLATION_POLICIES, ALLOWED_VEHICLE_SIZES }

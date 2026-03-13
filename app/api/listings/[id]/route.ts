@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { geocodeAddress } from '@/lib/geocode'
+import {
+  sanitizeRequired,
+  sanitizeStringMax,
+  validateEnum,
+  validateNumber,
+  ALLOWED_CANCELLATION_POLICIES,
+  ALLOWED_VEHICLE_SIZES,
+  isValidUploadUrl,
+} from '@/lib/validation'
 
 export async function GET(
   request: NextRequest,
@@ -86,50 +95,112 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const body = await request.json()
-    const lat = body.latitude != null ? Number(body.latitude) : listing.latitude
-    const lng = body.longitude != null ? Number(body.longitude) : listing.longitude
-    const address = body.address ?? listing.address
-    const city = body.city ?? listing.city
-    const state = body.state ?? listing.state
-    const zipCode = body.zipCode ?? listing.zipCode
+    let body: Record<string, unknown>
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 })
+    }
 
-    let latitude = lat
-    let longitude = lng
-    if (lat === 0 && lng === 0 && address && city && state) {
-      const geocoded = await geocodeAddress(address, city, state, zipCode || '')
+    // Sanitize text fields (only include if provided)
+    const title = body.title != null ? sanitizeRequired(body.title, 120) : undefined
+    const description = body.description != null ? sanitizeRequired(body.description, 2000) : undefined
+    const address = body.address != null ? sanitizeRequired(body.address, 200) : undefined
+    const city = body.city != null ? sanitizeRequired(body.city, 100) : undefined
+    const state = body.state != null ? sanitizeRequired(body.state, 50) : undefined
+    const zipCode = body.zipCode != null ? sanitizeRequired(body.zipCode, 20) : undefined
+    const entryInstructions = body.entryInstructions !== undefined
+      ? sanitizeStringMax(body.entryInstructions, 1000)
+      : undefined
+    const houseRules = body.houseRules !== undefined
+      ? sanitizeStringMax(body.houseRules, 1000)
+      : undefined
+
+    // Validate prices if provided
+    const pricePerHour = body.pricePerHour != null
+      ? validateNumber(body.pricePerHour, 0.01, 9999)
+      : undefined
+    const pricePerDay = body.pricePerDay != null
+      ? validateNumber(body.pricePerDay, 0.01, 99999)
+      : undefined
+
+    if (body.pricePerHour != null && pricePerHour == null) {
+      return NextResponse.json({ error: 'pricePerHour must be a valid positive number' }, { status: 400 })
+    }
+    if (body.pricePerDay != null && pricePerDay == null) {
+      return NextResponse.json({ error: 'pricePerDay must be a valid positive number' }, { status: 400 })
+    }
+
+    // Validate enums if provided
+    const cancellationPolicy = body.cancellationPolicy != null
+      ? validateEnum(body.cancellationPolicy, ALLOWED_CANCELLATION_POLICIES)
+        ? (body.cancellationPolicy as string)
+        : listing.cancellationPolicy
+      : undefined
+
+    const maxVehicleSize = body.maxVehicleSize !== undefined
+      ? validateEnum(body.maxVehicleSize, ALLOWED_VEHICLE_SIZES)
+        ? (body.maxVehicleSize as string) || null
+        : listing.maxVehicleSize
+      : undefined
+
+    // Coordinates
+    const rawLat = body.latitude != null ? Number(body.latitude) : listing.latitude
+    const rawLng = body.longitude != null ? Number(body.longitude) : listing.longitude
+    const resolvedAddress = address ?? listing.address
+    const resolvedCity = city ?? listing.city
+    const resolvedState = state ?? listing.state
+    const resolvedZip = zipCode ?? listing.zipCode
+
+    let latitude = isNaN(rawLat) ? listing.latitude : rawLat
+    let longitude = isNaN(rawLng) ? listing.longitude : rawLng
+
+    if (latitude === 0 && longitude === 0 && resolvedAddress && resolvedCity && resolvedState) {
+      const geocoded = await geocodeAddress(resolvedAddress, resolvedCity, resolvedState, resolvedZip || '')
       if (geocoded) {
         latitude = geocoded.lat
         longitude = geocoded.lng
       }
     }
 
-    const photos = body.photos != null
-      ? (typeof body.photos === 'string' ? body.photos : JSON.stringify(Array.isArray(body.photos) ? body.photos : []))
-      : undefined
+    // Photos
+    let photos: string | undefined
+    if (body.photos != null) {
+      const photosArr = Array.isArray(body.photos)
+        ? body.photos
+        : typeof body.photos === 'string'
+          ? (() => { try { return JSON.parse(body.photos as string) } catch { return [] } })()
+          : []
+      const validatedPhotos = photosArr
+        .filter((p: unknown) => isValidUploadUrl(p))
+        .slice(0, 20)
+      photos = JSON.stringify(validatedPhotos)
+    }
+
+    // Amenities
     const amenities = body.amenities != null
-      ? (typeof body.amenities === 'string' ? body.amenities : JSON.stringify(body.amenities))
+      ? JSON.stringify(Array.isArray(body.amenities) ? body.amenities.slice(0, 20) : [])
       : undefined
 
     const data: Record<string, unknown> = {
-      ...(body.title != null && { title: body.title }),
-      ...(body.description != null && { description: body.description }),
-      ...(body.address != null && { address: body.address }),
-      ...(body.city != null && { city: body.city }),
-      ...(body.state != null && { state: body.state }),
-      ...(body.zipCode != null && { zipCode: body.zipCode }),
+      ...(title !== undefined && { title }),
+      ...(description !== undefined && { description }),
+      ...(address !== undefined && { address }),
+      ...(city !== undefined && { city }),
+      ...(state !== undefined && { state }),
+      ...(zipCode !== undefined && { zipCode }),
       latitude,
       longitude,
-      ...(body.pricePerHour != null && { pricePerHour: parseFloat(body.pricePerHour) }),
-      ...(body.pricePerDay != null && { pricePerDay: parseFloat(body.pricePerDay) }),
-      ...(body.maxVehicleSize !== undefined && { maxVehicleSize: body.maxVehicleSize || null }),
+      ...(pricePerHour !== undefined && { pricePerHour }),
+      ...(pricePerDay !== undefined && { pricePerDay }),
+      ...(maxVehicleSize !== undefined && { maxVehicleSize }),
       ...(photos !== undefined && { photos }),
-      ...(body.entryInstructions !== undefined && { entryInstructions: body.entryInstructions || null }),
+      ...(entryInstructions !== undefined && { entryInstructions }),
       ...(amenities !== undefined && { amenities }),
       ...(body.instantBook !== undefined && { instantBook: body.instantBook !== false }),
-      ...(body.cancellationPolicy != null && { cancellationPolicy: body.cancellationPolicy || 'FLEXIBLE' }),
-      ...(body.houseRules !== undefined && { houseRules: body.houseRules || null }),
-      ...(body.isActive !== undefined && { isActive: body.isActive }),
+      ...(cancellationPolicy !== undefined && { cancellationPolicy }),
+      ...(houseRules !== undefined && { houseRules }),
+      ...(body.isActive !== undefined && { isActive: !!body.isActive }),
     }
 
     const updatedListing = await prisma.listing.update({
@@ -146,4 +217,3 @@ export async function PUT(
     )
   }
 }
-

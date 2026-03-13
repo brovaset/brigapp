@@ -26,6 +26,7 @@ export default function BookingDetailsPage() {
   const [extending, setExtending] = useState(false)
   const [newEndTime, setNewEndTime] = useState('')
   const [showRating, setShowRating] = useState(false)
+  const [alreadyRated, setAlreadyRated] = useState(false)
   const [rating, setRating] = useState({ stars: 0, comment: '' })
   const [submittingRating, setSubmittingRating] = useState(false)
   const [licenseVerified, setLicenseVerified] = useState(false)
@@ -44,7 +45,8 @@ export default function BookingDetailsPage() {
       setBooking(data.booking)
       // Check if current user has already rated this booking
       const userHasRated = data.booking?.ratings?.some((r: any) => r.giverId === user?.userId)
-      setShowRating(!userHasRated)
+      setAlreadyRated(!!userHasRated)
+      if (userHasRated) setShowRating(false)
     } catch (error) {
       console.error('Error fetching booking:', error)
     } finally {
@@ -205,8 +207,8 @@ export default function BookingDetailsPage() {
         return
       }
 
-      alert('Thank you for your rating!')
       setShowRating(false)
+      setAlreadyRated(true)
       setRating({ stars: 0, comment: '' })
       fetchBooking()
     } catch (error) {
@@ -414,7 +416,12 @@ export default function BookingDetailsPage() {
           {/* Rating Section */}
           {booking.status === 'COMPLETED' && (
             <div className="mb-6">
-              {!showRating ? (
+              {alreadyRated ? (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  You&apos;ve already rated this booking. Thank you for your feedback!
+                </div>
+              ) : !showRating ? (
                 <NeonButton
                   variant="secondary"
                   onClick={() => setShowRating(true)}
