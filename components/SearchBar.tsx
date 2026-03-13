@@ -11,6 +11,27 @@ interface SearchBarProps {
   onSearch?: (query: string) => void
 }
 
+interface GeoCoords {
+  lat: number
+  lng: number
+}
+
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+    { headers: { 'Accept-Language': 'en' } }
+  )
+  if (!res.ok) throw new Error('Geocode failed')
+  const data = await res.json()
+  const a = data.address || {}
+  const parts = [
+    a.suburb || a.neighbourhood || a.quarter,
+    a.city || a.town || a.village || a.county,
+    a.state,
+  ].filter(Boolean)
+  return parts.slice(0, 2).join(', ') || data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+}
+
 export default function SearchBar({ compact = false, onSearch }: SearchBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -18,6 +39,7 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
   const [location, setLocation] = useState('')
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
+  const [geoCoords, setGeoCoords] = useState<GeoCoords | null>(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
 
@@ -26,12 +48,14 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
     setLocationLoading(true)
     try {
       const { lat, lng } = await getCurrentPosition()
-      const params = new URLSearchParams(pathname === '/search' ? searchParams.toString() : '')
-      params.set('lat', String(lat))
-      params.set('lng', String(lng))
-      if (!params.has('radius')) params.set('radius', DEFAULT_RADIUS_KM)
-      params.delete('location')
-      router.push(`/search?${params.toString()}`)
+      let label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+      try {
+        label = await reverseGeocode(lat, lng)
+      } catch {
+        // fallback to raw coords if geocode fails
+      }
+      setLocation(label)
+      setGeoCoords({ lat, lng })
     } catch (err) {
       setLocationError(
         err instanceof GeoError ? err.message : 'Could not get location. Enter an address instead.'
@@ -44,15 +68,32 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setLocationError(null)
-    const params = new URLSearchParams()
-    if (location) params.set('location', location)
+    const params = new URLSearchParams(pathname === '/search' ? searchParams.toString() : '')
+
+    if (geoCoords) {
+      params.set('lat', String(geoCoords.lat))
+      params.set('lng', String(geoCoords.lng))
+      if (!params.has('radius')) params.set('radius', DEFAULT_RADIUS_KM)
+      params.delete('location')
+    } else if (location) {
+      params.set('location', location)
+      params.delete('lat')
+      params.delete('lng')
+    }
+
     if (checkIn) params.set('startDate', checkIn)
     if (checkOut) params.set('endDate', checkOut)
+
     if (onSearch) {
       onSearch(location)
     } else {
-      router.push(`/search${params.toString() ? '?' + params.toString() : ''}`)
+      router.push(`/search?${params.toString()}`)
     }
+  }
+
+  const handleLocationChange = (val: string) => {
+    setLocation(val)
+    if (geoCoords) setGeoCoords(null)
   }
 
   const errorBanner = locationError && (
@@ -71,7 +112,7 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
     </div>
   )
 
-  /* ── Compact (used inside search page header) ── */
+  /* ── Compact (search page header) ── */
   if (compact) {
     return (
       <form onSubmit={handleSubmit} className="relative">
@@ -84,15 +125,31 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
                 type="button"
                 onClick={handleUseMyLocation}
                 disabled={locationLoading}
-                className="text-[10px] font-medium text-car-neon hover:text-car-electric disabled:opacity-50 whitespace-nowrap"
+                className="text-[10px] font-medium text-car-neon hover:text-car-electric disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
               >
-                {locationLoading ? 'Locating…' : 'Use location'}
+                {locationLoading ? (
+                  <>
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Locating…
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Use location
+                  </>
+                )}
               </button>
             </div>
             <input
               type="text"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => handleLocationChange(e.target.value)}
               placeholder="City, address…"
               className="w-full text-sm outline-none bg-transparent text-gray-900 placeholder-gray-400"
             />
@@ -142,18 +199,37 @@ export default function SearchBar({ compact = false, onSearch }: SearchBarProps)
               type="button"
               onClick={handleUseMyLocation}
               disabled={locationLoading}
-              className="text-[11px] font-medium text-car-neon hover:text-car-electric disabled:opacity-50 whitespace-nowrap"
+              className="text-[11px] font-medium text-car-neon hover:text-car-electric disabled:opacity-50 whitespace-nowrap flex items-center gap-1"
             >
-              {locationLoading ? 'Locating…' : 'Use my location'}
+              {locationLoading ? (
+                <>
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Detecting location…
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Use my location
+                </>
+              )}
             </button>
           </div>
           <input
             type="text"
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={(e) => handleLocationChange(e.target.value)}
             placeholder="City, neighbourhood or address"
             className="w-full outline-none bg-transparent text-gray-900 placeholder-gray-400 text-sm"
           />
+          {geoCoords && (
+            <p className="text-[10px] text-car-neon mt-0.5">Using your precise location</p>
+          )}
         </div>
 
         {/* Check in */}
