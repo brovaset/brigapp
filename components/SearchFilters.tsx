@@ -1,382 +1,354 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Quick sort/filter row (All, Nearby, Budget, etc.)
 const QUICK_FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'nearby', label: 'Nearby' },
-  { id: 'cheap', label: 'Budget' },
-  { id: 'rated', label: 'Top Rated' },
-  { id: 'instant', label: 'Instant Book' },
-  { id: 'large', label: 'Large Vehicles' },
+  { id: 'all',     label: 'All' },
+  { id: 'nearby',  label: 'Nearby' },
+  { id: 'cheap',   label: 'Budget' },
+  { id: 'rated',   label: 'Top rated' },
+  { id: 'instant', label: 'Instant book' },
+  { id: 'large',   label: 'Large vehicles' },
 ]
 
-// Amenity pill filters for driveways
-const AMENITY_PILLS = [
-  { id: 'covered', label: 'Covered', icon: 'M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3' },
-  { id: 'evCharging', label: 'EV Charger', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-  { id: 'gated', label: 'Gated', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-  { id: 'accessible24_7', label: '24/7 Access', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+const AMENITIES = [
+  { id: 'covered',       label: 'Covered',    icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { id: 'evCharging',    label: 'EV charger', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  { id: 'gated',         label: 'Gated',      icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+  { id: 'accessible24_7',label: '24/7 access','icon': 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
 ]
 
-const EV_CHARGER_TYPES = [
+const EV_TYPES = [
   { id: 'level1', label: 'Level 1' },
   { id: 'level2', label: 'Level 2' },
-  { id: 'tesla', label: 'Tesla NACS' },
+  { id: 'tesla',  label: 'Tesla NACS' },
 ]
 
 const VEHICLE_SIZES = [
   { id: 'sedan', label: 'Sedan' },
-  { id: 'suv', label: 'SUV' },
+  { id: 'suv',   label: 'SUV' },
   { id: 'truck', label: 'Truck' },
-  { id: 'van', label: 'Van' },
+  { id: 'van',   label: 'Van' },
 ]
 
-function parseFilters(searchParams: URLSearchParams) {
-  const filtersParam = searchParams.get('filters')?.split(',').filter(Boolean) ?? []
-  const amenities = searchParams.get('amenities')?.split(',').filter(Boolean) ?? []
-  const evChargerTypes = searchParams.get('evChargerTypes')?.split(',').filter(Boolean) ?? []
-  const maxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : 0
-  const vehicleSizes = searchParams.get('vehicleSizes')?.split(',').filter(Boolean) ?? []
-  const instantBook = searchParams.get('instantBook') === 'true'
+const PRICE_OPTIONS = [
+  { val: 0,  label: 'Any' },
+  { val: 10, label: 'Under $10' },
+  { val: 20, label: 'Under $20' },
+  { val: 30, label: 'Under $30' },
+  { val: 50, label: 'Under $50' },
+]
 
-  return { filtersParam, amenities, evChargerTypes, maxPrice, vehicleSizes, instantBook }
+function parseFilters(sp: URLSearchParams) {
+  return {
+    filtersParam:    sp.get('filters')?.split(',').filter(Boolean) ?? [],
+    amenities:       sp.get('amenities')?.split(',').filter(Boolean) ?? [],
+    evChargerTypes:  sp.get('evChargerTypes')?.split(',').filter(Boolean) ?? [],
+    maxPrice:        sp.get('maxPrice') ? parseInt(sp.get('maxPrice')!, 10) : 0,
+    vehicleSizes:    sp.get('vehicleSizes')?.split(',').filter(Boolean) ?? [],
+    instantBook:     sp.get('instantBook') === 'true',
+  }
+}
+
+/* ── small pill helper ── */
+function Pill({
+  active,
+  onClick,
+  children,
+  icon,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+  icon?: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-all duration-150 ${
+        active
+          ? 'bg-gray-900 border-gray-900 text-white'
+          : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400'
+      }`}
+    >
+      {icon && (
+        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
+        </svg>
+      )}
+      {children}
+    </button>
+  )
+}
+
+/* ── toggle switch ── */
+function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onChange}
+      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 focus:outline-none ${
+        on ? 'bg-car-neon' : 'bg-gray-200'
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 mt-0.5 ${
+          on ? 'translate-x-4' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  )
 }
 
 export default function SearchFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [expanded, setExpanded] = useState(true)
-  // Optimistic state so every filter button lights up immediately on click (before URL updates)
-  const [optimisticQuickFilters, setOptimisticQuickFilters] = useState<string[] | null>(null)
-  const [optimisticAmenities, setOptimisticAmenities] = useState<string[] | null>(null)
-  const [optimisticEvChargerTypes, setOptimisticEvChargerTypes] = useState<string[] | null>(null)
-  const [optimisticVehicleSizes, setOptimisticVehicleSizes] = useState<string[] | null>(null)
-  const [optimisticInstantBook, setOptimisticInstantBook] = useState<boolean | null>(null)
+  const [open, setOpen] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
 
-  const { filtersParam, amenities, evChargerTypes, maxPrice, vehicleSizes, instantBook } = parseFilters(searchParams)
+  const {
+    filtersParam, amenities, evChargerTypes,
+    maxPrice, vehicleSizes, instantBook,
+  } = parseFilters(searchParams)
 
-  const filtersFromUrl = searchParams.get('filters') ?? ''
-  const amenitiesFromUrl = searchParams.get('amenities') ?? ''
-  const evChargerTypesFromUrl = searchParams.get('evChargerTypes') ?? ''
-  const vehicleSizesFromUrl = searchParams.get('vehicleSizes') ?? ''
-  const instantBookFromUrl = searchParams.get('instantBook') ?? ''
-
+  // Close on outside click
   useEffect(() => {
-    queueMicrotask(() => setOptimisticQuickFilters(null))
-  }, [filtersFromUrl])
-  useEffect(() => {
-    queueMicrotask(() => setOptimisticAmenities(null))
-  }, [amenitiesFromUrl])
-  useEffect(() => {
-    queueMicrotask(() => setOptimisticEvChargerTypes(null))
-  }, [evChargerTypesFromUrl])
-  useEffect(() => {
-    queueMicrotask(() => setOptimisticVehicleSizes(null))
-  }, [vehicleSizesFromUrl])
-  useEffect(() => {
-    queueMicrotask(() => setOptimisticInstantBook(null))
-  }, [instantBookFromUrl])
-
-  useEffect(() => {
-    if (expanded) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
     }
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [expanded])
-
-  const activeQuickFilters = optimisticQuickFilters ?? filtersParam
-  const activeAmenities = optimisticAmenities ?? amenities
-  const activeEvChargerTypes = optimisticEvChargerTypes ?? evChargerTypes
-  const activeVehicleSizes = optimisticVehicleSizes ?? vehicleSizes
-  const activeInstantBook = optimisticInstantBook !== null ? optimisticInstantBook : instantBook
-
-  const toggleQuickFilter = (id: string) => {
-    let next: string[]
-    if (id === 'all') {
-      next = []
-    } else {
-      const current = activeQuickFilters.includes(id)
-        ? activeQuickFilters.filter((f) => f !== id)
-        : [...activeQuickFilters, id]
-      next = current
-    }
-    setOptimisticQuickFilters(next)
-    updateParams({ filters: next.length ? next.join(',') : null })
-  }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
 
   const updateParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString())
-    for (const [key, val] of Object.entries(updates)) {
-      if (val === null || val === '') {
-        params.delete(key)
-      } else {
-        params.set(key, val)
-      }
+    for (const [k, v] of Object.entries(updates)) {
+      if (v === null || v === '') params.delete(k)
+      else params.set(k, v)
     }
     router.push(`/search?${params.toString()}`)
   }
 
+  const toggleQuickFilter = (id: string) => {
+    if (id === 'all') { updateParams({ filters: null }); return }
+    const next = filtersParam.includes(id)
+      ? filtersParam.filter((f) => f !== id)
+      : [...filtersParam, id]
+    updateParams({ filters: next.length ? next.join(',') : null })
+  }
+
   const toggleAmenity = (id: string) => {
-    const next = activeAmenities.includes(id) ? activeAmenities.filter((a) => a !== id) : [...activeAmenities, id]
-    setOptimisticAmenities(next)
+    const next = amenities.includes(id) ? amenities.filter((a) => a !== id) : [...amenities, id]
     updateParams({ amenities: next.length ? next.join(',') : null })
   }
 
-  const toggleEvChargerType = (id: string) => {
-    const next = activeEvChargerTypes.includes(id)
-      ? activeEvChargerTypes.filter((t) => t !== id)
-      : [...activeEvChargerTypes, id]
-    setOptimisticEvChargerTypes(next)
+  const toggleEvType = (id: string) => {
+    const next = evChargerTypes.includes(id) ? evChargerTypes.filter((t) => t !== id) : [...evChargerTypes, id]
     updateParams({ evChargerTypes: next.length ? next.join(',') : null })
   }
 
-  const setMaxPrice = (value: number) => {
-    updateParams({ maxPrice: value > 0 ? String(value) : null })
-  }
-
   const toggleVehicleSize = (id: string) => {
-    const next = activeVehicleSizes.includes(id)
-      ? activeVehicleSizes.filter((s) => s !== id)
-      : [...activeVehicleSizes, id]
-    setOptimisticVehicleSizes(next)
+    const next = vehicleSizes.includes(id) ? vehicleSizes.filter((s) => s !== id) : [...vehicleSizes, id]
     updateParams({ vehicleSizes: next.length ? next.join(',') : null })
   }
 
-  const toggleInstantBook = () => {
-    const next = !activeInstantBook
-    setOptimisticInstantBook(next)
-    updateParams({ instantBook: next ? 'true' : null })
-  }
-
   const clearAll = () => {
-    setOptimisticQuickFilters(null)
-    setOptimisticAmenities(null)
-    setOptimisticEvChargerTypes(null)
-    setOptimisticVehicleSizes(null)
-    setOptimisticInstantBook(null)
     const params = new URLSearchParams(searchParams.toString())
-    params.delete('filters')
-    params.delete('amenities')
-    params.delete('evChargerTypes')
-    params.delete('maxPrice')
-    params.delete('vehicleSizes')
-    params.delete('instantBook')
+    for (const k of ['filters', 'amenities', 'evChargerTypes', 'maxPrice', 'vehicleSizes', 'instantBook']) {
+      params.delete(k)
+    }
     router.push(`/search?${params.toString()}`)
+    setOpen(false)
   }
 
-  const activeCount =
-    activeQuickFilters.length +
-    activeAmenities.length +
-    activeEvChargerTypes.length +
+  const detailCount =
+    amenities.length +
+    evChargerTypes.length +
     (maxPrice > 0 ? 1 : 0) +
-    activeVehicleSizes.length +
-    (activeInstantBook ? 1 : 0)
+    vehicleSizes.length +
+    (instantBook ? 1 : 0)
+
+  const totalCount = filtersParam.length + detailCount
 
   return (
-    <div className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-16 z-40 shadow-sm">
+    <div className="bg-white border-b border-gray-200 sticky top-16 z-40" ref={panelRef}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center justify-between w-full py-4 text-left font-semibold text-gray-900 hover:text-car-neon transition-colors uppercase tracking-wide text-sm"
-        >
-          <span className="uppercase tracking-wider">{expanded ? 'Hide filters' : 'Show filters'}</span>
-          {activeCount > 0 && (
-            <span className="ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-car-neon text-xs font-medium text-white">
-              {activeCount}
-            </span>
-          )}
-          <motion.span
-            animate={{ rotate: expanded ? 180 : 0 }}
-            className="inline-block ml-2"
+
+        {/* ── Sticky bar ── */}
+        <div className="flex items-center gap-3 py-3">
+          {/* Quick filters — horizontal scroll */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
+            {QUICK_FILTERS.map(({ id, label }) => {
+              const active = id === 'all' ? filtersParam.length === 0 : filtersParam.includes(id)
+              return (
+                <Pill key={id} active={active} onClick={() => toggleQuickFilter(id)}>
+                  {label}
+                </Pill>
+              )
+            })}
+          </div>
+
+          {/* Divider */}
+          <div className="h-5 w-px bg-gray-200 shrink-0" />
+
+          {/* Detail-filters button */}
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border shrink-0 transition-all duration-150 ${
+              open || detailCount > 0
+                ? 'bg-gray-900 border-gray-900 text-white'
+                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400'
+            }`}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
             </svg>
-          </motion.span>
-        </button>
+            Filters
+            {detailCount > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-gray-900 text-[10px] font-semibold">
+                {detailCount}
+              </span>
+            )}
+            <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.15 }}>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </motion.span>
+          </button>
+        </div>
+      </div>
 
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden border-t border-gray-100 relative"
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-car-neon to-car-electric" aria-hidden />
-              <div className="pb-6 pt-4 space-y-6 pl-4">
-                {/* Quick filters (All, Nearby, Budget, etc.) - multi-select, blue activation */}
+      {/* ── Dropdown panel ── */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="overflow-hidden border-t border-gray-100"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-5">
+
+                {/* Amenities */}
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-semibold text-gray-500 mb-2.5">Amenities</p>
+                  <div className="flex flex-wrap gap-2">
+                    {AMENITIES.map(({ id, label, icon }) => (
+                      <Pill key={id} active={amenities.includes(id)} onClick={() => toggleAmenity(id)} icon={icon}>
+                        {label}
+                      </Pill>
+                    ))}
+                  </div>
+
+                  {/* EV type sub-filter */}
+                  <AnimatePresence>
+                    {amenities.includes('evCharging') && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="mt-3 pl-3 border-l-2 border-car-neon/30"
+                      >
+                        <p className="text-xs text-gray-400 mb-1.5">Charger type</p>
+                        <div className="flex flex-wrap gap-2">
+                          {EV_TYPES.map(({ id, label }) => (
+                            <Pill key={id} active={evChargerTypes.includes(id)} onClick={() => toggleEvType(id)}>
+                              {label}
+                            </Pill>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Max price */}
                 <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-2.5">Max price / hr</p>
                   <div className="flex flex-wrap gap-2">
-                    {QUICK_FILTERS.map(({ id, label }) => (
-                      <motion.button
-                        key={id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => toggleQuickFilter(id)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                          id === 'all'
-                            ? activeQuickFilters.length === 0
-                              ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                            : activeQuickFilters.includes(id)
-                              ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                        }`}
+                    {PRICE_OPTIONS.map(({ val, label }) => (
+                      <Pill
+                        key={val}
+                        active={maxPrice === val}
+                        onClick={() => updateParams({ maxPrice: val > 0 ? String(val) : null })}
                       >
                         {label}
-                      </motion.button>
+                      </Pill>
                     ))}
                   </div>
                 </div>
 
-                {/* Amenity pills */}
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="flex flex-wrap gap-2">
-                    {AMENITY_PILLS.map(({ id, label, icon }) => (
-                      <motion.button
-                        key={id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => toggleAmenity(id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                          activeAmenities.includes(id)
-                            ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                        }`}
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
-                        </svg>
-                        {label}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* EV Charger Type (when EV Charger selected) - same blue activation as amenity pills */}
-                {activeAmenities.includes('evCharging') && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium flex items-center gap-1">
-                      <svg className="w-4 h-4 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      EV Charger Type
-                    </p>
+                {/* Vehicle size + Instant book */}
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-2.5">Vehicle size</p>
                     <div className="flex flex-wrap gap-2">
-                      {EV_CHARGER_TYPES.map(({ id, label }) => (
-                        <motion.button
-                          key={id}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => toggleEvChargerType(id)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                            activeEvChargerTypes.includes(id)
-                              ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                              : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                          }`}
-                        >
+                      {VEHICLE_SIZES.map(({ id, label }) => (
+                        <Pill key={id} active={vehicleSizes.includes(id)} onClick={() => toggleVehicleSize(id)}>
                           {label}
-                        </motion.button>
+                        </Pill>
                       ))}
                     </div>
                   </div>
-                )}
 
-                {/* Max price per hour - price pills for consistent blue activation style */}
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium flex items-center gap-1">
-                    <svg className="w-4 h-4 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Max Price/Hour
-                  </p>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    {[0, 5, 10, 15, 20, 25, 30, 40, 50].map((val) => (
-                      <motion.button
-                        key={val}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setMaxPrice(val)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                          maxPrice === val
-                            ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                        }`}
-                      >
-                        {val === 0 ? 'Any' : `$${val}`}
-                      </motion.button>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-500">Instant book only</p>
+                    <Toggle
+                      on={instantBook}
+                      onChange={() => updateParams({ instantBook: !instantBook ? 'true' : null })}
+                    />
                   </div>
                 </div>
-
-                {/* Vehicle size - same blue activation as amenity pills, supports multiple */}
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium flex items-center gap-1">
-                    <svg className="w-4 h-4 text-car-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1-1V6a1 1 0 00-1-1h-1m-1-1a1 1 0 00-1 1v10a1 1 0 001 1h1m-8-1a1 1 0 01-1-1V6a1 1 0 010-2h1V4a1 1 0 011-1h4a1 1 0 011 1v1h1a1 1 0 010 2v10a1 1 0 01-1 1h-1z" />
-                    </svg>
-                    Vehicle Size
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {VEHICLE_SIZES.map(({ id, label }) => (
-                      <motion.button
-                        key={id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => toggleVehicleSize(id)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow capitalize ${
-                          activeVehicleSizes.includes(id)
-                            ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                            : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                        }`}
-                      >
-                        {label}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Instant book */}
-                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-wider text-gray-500 font-medium">Instant Book</p>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={toggleInstantBook}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 transition-shadow ${
-                      activeInstantBook
-                        ? 'bg-car-neon border-car-neon text-white shadow-[0_0_14px_rgba(0,122,255,0.5)]'
-                        : 'bg-white border-gray-200 text-gray-700 hover:border-car-neon/50 hover:text-car-neon shadow-none'
-                    }`}
-                  >
-                    {activeInstantBook ? 'On' : 'Off'}
-                  </motion.button>
-                </div>
-
-                {activeCount > 0 && (
-                  <button
-                    onClick={clearAll}
-                    className="text-sm font-medium text-gray-500 hover:text-car-neon transition-colors"
-                  >
-                    Clear all filters
-                  </button>
-                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+
+              {/* Footer */}
+              {detailCount > 0 && (
+                <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{detailCount} filter{detailCount !== 1 ? 's' : ''} active</span>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={clearAll}
+                      className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                    >
+                      Clear all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="text-xs font-medium px-3 py-1.5 bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+              {detailCount === 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
