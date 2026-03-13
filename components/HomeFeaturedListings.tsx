@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import ListingCard from '@/components/ListingCard'
 import type { Listing } from '@/types'
@@ -16,53 +15,43 @@ export default function HomeFeaturedListings({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-12">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-2">
-            Discover Popular Spaces
-          </h2>
-          <p className="text-gray-600 font-medium">Browse verified parking options near you</p>
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Popular spaces</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Verified parking options near you</p>
         </div>
-        <motion.button
+        <button
           onClick={() => router.push('/search')}
-          whileHover={{ x: 6, scale: 1.05 }}
-          className="px-6 py-2 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-full font-semibold text-sm shadow-lg shadow-car-neon/20 hover:shadow-xl transition-all"
+          className="text-sm font-medium text-car-neon hover:text-car-electric transition-colors whitespace-nowrap"
         >
-          Explore All →
-        </motion.button>
+          View all →
+        </button>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="aspect-square bg-gradient-to-br from-car-neon/10 to-car-electric/10 rounded-xl mb-3" />
-              <div className="h-4 bg-car-neon/10 rounded mb-2" />
-              <div className="h-3 bg-car-electric/10 rounded w-2/3" />
+              <div className="aspect-[4/3] bg-gray-100 rounded-xl mb-3" />
+              <div className="h-3.5 bg-gray-100 rounded mb-2 w-3/4" />
+              <div className="h-3 bg-gray-100 rounded w-1/2" />
             </div>
           ))}
         </div>
+      ) : listings.length === 0 ? (
+        <div className="text-center py-16 text-gray-500">
+          <svg className="w-10 h-10 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <p className="text-sm">No spaces listed yet — check back soon.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
           {listings.map((listing, index) => (
             <ListingCard key={listing.id} listing={listing} index={index} />
           ))}
         </div>
-      )}
-
-      {listings.length === 0 && !loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-16 px-6 bg-white/80 rounded-xl border border-gray-200/80"
-        >
-          <p className="text-gray-600 text-lg mb-2">
-            No listings available at the moment
-          </p>
-          <p className="text-gray-500 text-sm">
-            Check back soon or try a different location
-          </p>
-        </motion.div>
       )}
     </>
   )

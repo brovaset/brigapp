@@ -10,32 +10,15 @@ interface FloatingCardProps {
   glowColor?: 'neon' | 'electric' | 'turbo' | 'neutral' | 'cyan' | 'pink' | 'purple' | 'gradient'
 }
 
-const colorVariants = {
-  neon: {
-    border: 'border-l-car-neon',
-    bg: 'bg-white/95 hover:bg-gradient-to-br hover:from-white hover:to-car-neon/5',
-    shadow: 'shadow-lg hover:shadow-[0_8px_30px_rgba(0,122,255,0.15)]',
-  },
-  electric: {
-    border: 'border-l-car-electric',
-    bg: 'bg-white/95 hover:bg-gradient-to-br hover:from-white hover:to-car-electric/5',
-    shadow: 'shadow-lg hover:shadow-[0_8px_30px_rgba(52,199,89,0.15)]',
-  },
-  turbo: {
-    border: 'border-l-car-turbo',
-    bg: 'bg-white/95 hover:bg-gradient-to-br hover:from-white hover:to-car-turbo/5',
-    shadow: 'shadow-lg hover:shadow-[0_8px_30px_rgba(88,86,214,0.15)]',
-  },
-  neutral: {
-    border: 'border-l-gray-300',
-    bg: 'bg-white/95 hover:bg-gradient-to-br hover:from-white hover:to-car-neon/5',
-    shadow: 'shadow-lg hover:shadow-[0_8px_30px_rgba(0,122,255,0.1)]',
-  },
-  gradient: {
-    border: 'border-l-purple-500/70',
-    bg: 'bg-gradient-to-br from-purple-500/30 via-purple-400/15 to-cyan-500/30',
-    shadow: 'shadow-lg shadow-purple-500/20',
-  },
+const accentMap: Record<string, string> = {
+  neon: 'border-l-car-neon',
+  electric: 'border-l-car-electric',
+  turbo: 'border-l-car-turbo',
+  neutral: 'border-l-gray-300',
+  cyan: 'border-l-car-neon',
+  pink: 'border-l-car-turbo',
+  purple: 'border-l-car-turbo',
+  gradient: 'border-l-purple-400',
 }
 
 export default function FloatingCard({
@@ -44,39 +27,22 @@ export default function FloatingCard({
   className = '',
   glowColor = 'neon',
 }: FloatingCardProps) {
-  const variant = colorVariants[
-    glowColor === 'cyan' ? 'neon' : glowColor === 'pink' || glowColor === 'purple' ? 'turbo' : glowColor === 'gradient' ? 'gradient' : glowColor
-  ]
+  const accent = accentMap[glowColor] ?? accentMap.neon
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50, rotateX: -15 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{
-        duration: 0.8,
-        delay,
-        type: 'spring',
-        stiffness: 100,
-      }}
-      whileHover={{
-        y: -8,
-        rotateY: 3,
-        rotateX: 3,
-        scale: 1.02,
-        transition: { duration: 0.3 },
-      }}
-      whileTap={{ scale: 0.99 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, ease: 'easeOut' }}
+      whileHover={{ y: -2, transition: { duration: 0.2 } }}
       className={`
         relative overflow-hidden rounded-xl p-6
-        border border-gray-200/80 border-l-4
-        ${variant.border} ${variant.bg} ${variant.shadow}
-        backdrop-blur-sm transition-all duration-300 cursor-default
+        bg-white border border-gray-200/80 border-l-4 ${accent}
+        shadow-sm hover:shadow-md transition-shadow duration-200
         ${className}
       `}
-      style={{ transformStyle: 'preserve-3d' }}
     >
       {children}
     </motion.div>
   )
 }
-

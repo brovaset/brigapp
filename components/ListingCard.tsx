@@ -55,7 +55,6 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-
     const newState = !isFavorite
     setIsFavorite(newState)
 
@@ -85,105 +84,95 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
   return (
     <Link href={`/listings/${listing.id}`}>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
-        whileHover={{ y: -4 }}
+        transition={{ delay: index * 0.04, duration: 0.3 }}
+        whileHover={{ y: -3 }}
         className="group cursor-pointer"
       >
-        <div className="relative w-full aspect-square rounded-2xl overflow-hidden mb-4 border-2 border-gray-200 transition-all duration-300 bg-white shadow-lg group-hover:shadow-2xl group-hover:shadow-[0_12px_35px_rgba(0,122,255,0.18)] group-hover:border-car-neon/50">
+        {/* Image */}
+        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-gray-100">
           {imageUrl && !imageError ? (
             <Image
               src={imageUrl}
               alt={listing.title}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+              className="object-cover group-hover:scale-[1.03] transition-transform duration-400 ease-out"
               onError={() => setImageError(true)}
-              sizes="(max-width: 768px) 100vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-car-neon/10 via-car-electric/5 to-car-neon/10 flex items-center justify-center">
-              <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+            <div className="w-full h-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
             </div>
           )}
-          
-          {/* Favorite Button */}
-          <motion.button
+
+          {/* Favorite */}
+          <button
             onClick={handleFavoriteClick}
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white transition-all shadow-md border border-gray-200 hover:border-car-speed/50 focus:outline-none focus:ring-2 focus:ring-car-neon/50"
+            className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors shadow-sm focus:outline-none"
+            aria-label={isFavorite ? 'Remove from saved' : 'Save'}
           >
             <svg
-              className={`w-5 h-5 transition-all ${
-                isFavorite 
-                  ? 'fill-car-speed text-car-speed' 
-                  : 'text-gray-400 hover:text-car-neon'
-              }`}
+              className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-gray-400 hover:text-gray-600'}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              strokeWidth={2}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-          </motion.button>
+          </button>
 
-          {/* Active Badge */}
+          {/* Inactive badge */}
           {!listing.isActive && (
-            <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white/95 backdrop-blur-sm text-car-speed text-xs font-semibold border border-car-speed/30 shadow-md">
-              Inactive
+            <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-white/90 text-gray-600 text-xs font-medium">
+              Unavailable
+            </div>
+          )}
+
+          {/* Instant book badge */}
+          {listing.instantBook && (
+            <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-car-neon/90 text-white text-xs font-medium">
+              Instant book
             </div>
           )}
         </div>
 
-        <div className="space-y-1">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate group-hover:text-car-neon transition-colors">
-                {listing.title}
-              </h3>
-              <p className="text-sm text-gray-600 truncate">{listing.address}</p>
-            </div>
-            {listing.averageRating && listing.averageRating > 0 && (
-              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                <svg className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20">
+        {/* Info */}
+        <div className="space-y-0.5">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-medium text-gray-900 truncate text-sm leading-snug">
+              {listing.title}
+            </h3>
+            {listing.averageRating && listing.averageRating > 0 ? (
+              <div className="flex items-center gap-0.5 shrink-0 text-sm">
+                <svg className="w-3.5 h-3.5 fill-amber-400" viewBox="0 0 20 20">
                   <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                 </svg>
-                <span className="text-sm font-medium text-gray-900">
-                  {listing.averageRating.toFixed(1)}
-                </span>
+                <span className="font-medium text-gray-700 text-xs">{listing.averageRating.toFixed(1)}</span>
               </div>
-            )}
+            ) : null}
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">{listing.city}, {listing.state}</span>
+          <p className="text-xs text-gray-500 truncate">
+            {listing.city}, {listing.state}
             {listing.distance !== undefined && (
-              <span className="text-car-neon font-semibold">
-                {listing.distance < 1 
-                  ? `${Math.round(listing.distance * 1000)}m`
-                  : `${listing.distance.toFixed(1)}km`}
+              <span className="ml-1 text-car-neon font-medium">
+                · {listing.distance < 1
+                  ? `${Math.round(listing.distance * 1000)} m`
+                  : `${listing.distance.toFixed(1)} km`}
               </span>
             )}
-          </div>
+          </p>
 
-          <div className="flex items-baseline gap-1 pt-1">
-            <span className="text-lg font-semibold text-car-electric">
-              {formatCurrency(listing.pricePerHour)}
-            </span>
-            <span className="text-sm text-gray-600">/ hour</span>
+          <div className="flex items-baseline gap-1 pt-0.5">
+            <span className="font-semibold text-gray-900 text-sm">{formatCurrency(listing.pricePerHour)}</span>
+            <span className="text-xs text-gray-500">/ hr</span>
             {listing.pricePerDay > 0 && (
-              <>
-                <span className="mx-1 text-gray-400">·</span>
-                <span className="text-sm text-gray-700">
-                  {formatCurrency(listing.pricePerDay)}/ day
-                </span>
-              </>
+              <span className="text-xs text-gray-400 ml-1">· {formatCurrency(listing.pricePerDay)} / day</span>
             )}
           </div>
         </div>
@@ -191,4 +180,3 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
     </Link>
   )
 }
-

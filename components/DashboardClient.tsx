@@ -2,11 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import FloatingCard from '@/components/FloatingCard'
-import NeonButton from '@/components/NeonButton'
+import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
 import type { Session } from '@/lib/session'
+
+type Tab = 'search' | 'listings' | 'bookings'
+
+const STATUS_STYLES: Record<string, string> = {
+  PENDING:   'bg-amber-50 text-amber-700 border border-amber-200',
+  CONFIRMED: 'bg-blue-50 text-blue-700 border border-blue-200',
+  ACTIVE:    'bg-green-50 text-green-700 border border-green-200',
+  COMPLETED: 'bg-gray-100 text-gray-600 border border-gray-200',
+  CANCELLED: 'bg-red-50 text-red-600 border border-red-200',
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  PENDING:   'Pending',
+  CONFIRMED: 'Confirmed',
+  ACTIVE:    'Active',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+}
 
 export default function DashboardClient({
   session,
@@ -16,118 +32,110 @@ export default function DashboardClient({
   initialBookings: any[]
 }) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'search' | 'listings' | 'bookings'>('search')
-
   const canSearch = session.role === 'DRIVER' || session.role === 'BOTH'
-  const canHost = session.role === 'HOST' || session.role === 'BOTH'
+  const canHost   = session.role === 'HOST'   || session.role === 'BOTH'
+
+  const defaultTab: Tab = canSearch ? 'search' : canHost ? 'listings' : 'bookings'
+  const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
+
+  const tabs: { id: Tab; label: string; show: boolean }[] = [
+    { id: 'search',   label: 'Find parking', show: canSearch ?? true },
+    { id: 'listings', label: 'My listings',  show: canHost   ?? true },
+    { id: 'bookings', label: 'My bookings',  show: true },
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-gray-200/80 p-2 mb-6 glow-soft">
-          <nav className="flex space-x-2">
-            {(canSearch ?? true) && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveTab('search')}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
-                  activeTab === 'search'
-                    ? 'bg-gradient-to-r from-car-neon to-car-electric text-white shadow-md font-semibold'
-                    : 'text-gray-700 hover:text-car-neon hover:bg-gray-50'
-                }`}
-              >
-                Find Parking
-              </motion.button>
-            )}
-            {(canHost ?? true) && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveTab('listings')}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
-                  activeTab === 'listings'
-                    ? 'bg-gradient-to-r from-car-neon to-car-electric text-white shadow-md font-semibold'
-                    : 'text-gray-700 hover:text-car-neon hover:bg-gray-50'
-                }`}
-              >
-                My Listings
-              </motion.button>
-            )}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setActiveTab('bookings')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
-                activeTab === 'bookings'
-                  ? 'bg-gradient-to-r from-car-neon to-car-electric text-white shadow-md font-semibold'
-                  : 'text-gray-700 hover:text-car-neon hover:bg-gray-50'
-              }`}
-            >
-              My Bookings
-            </motion.button>
-          </nav>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+
+        {/* Greeting */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Hey{session.firstName ? `, ${session.firstName}` : ''} 👋
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">What would you like to do today?</p>
         </div>
 
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mt-6"
-        >
-          {activeTab === 'search' && (canSearch ?? true) && (
-            <FloatingCard glowColor="neon">
-              <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-4 text-gray-900">Find Your Perfect Parking Spot</h2>
-                <p className="text-gray-600 mb-6">
-                  Search for nearby driveways with our interactive map
-                </p>
-                <motion.button
-                  onClick={() => router.push('/search')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-6 py-3 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
-                >
-                  Start Searching
-                </motion.button>
-              </div>
-            </FloatingCard>
-          )}
+        {/* Tab nav */}
+        <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 mb-6 shadow-sm">
+          {tabs.filter((t) => t.show).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-150 ${
+                activeTab === t.id
+                  ? 'bg-car-neon text-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-          {activeTab === 'listings' && (canHost ?? true) && (
-            <div className="space-y-4">
-              <FloatingCard glowColor="electric">
-                <h2 className="text-2xl font-bold mb-4 text-gray-900">Manage Your Listings</h2>
-                <p className="text-gray-600 mb-6">
-                  Create and manage your driveway listings to start earning
-                </p>
-                <div className="flex gap-4">
-                  <motion.button
-                    onClick={() => router.push('/host/listings')}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-car-neon to-car-electric text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
-                  >
-                    Create New Listing
-                  </motion.button>
-                  <motion.button
-                    onClick={() => router.push('/host/earnings')}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-4 py-3 border-2 border-car-electric/50 text-car-electric rounded-lg hover:bg-car-electric/10 transition-all font-semibold"
-                  >
-                    View Earnings
-                  </motion.button>
+        {/* Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'search' && (canSearch ?? true) && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+                <div className="w-12 h-12 rounded-xl bg-car-neon/10 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-car-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </div>
-              </FloatingCard>
-            </div>
-          )}
+                <h2 className="text-xl font-semibold text-gray-900 mb-1.5">Find a parking spot</h2>
+                <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+                  Search by map, address or city and book in seconds.
+                </p>
+                <button
+                  onClick={() => router.push('/search')}
+                  className="px-6 py-2.5 bg-car-neon text-white font-medium rounded-lg hover:bg-car-electric transition-colors text-sm shadow-sm"
+                >
+                  Start searching
+                </button>
+              </div>
+            )}
 
-          {activeTab === 'bookings' && (
-            <BookingsList userId={session.userId} bookings={initialBookings} />
-          )}
-        </motion.div>
+            {activeTab === 'listings' && (canHost ?? true) && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+                <div className="w-12 h-12 rounded-xl bg-car-electric/10 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-car-electric" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-1.5">Manage your listings</h2>
+                <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+                  List your driveway or garage and start earning.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={() => router.push('/host/listings')}
+                    className="px-5 py-2.5 bg-car-neon text-white font-medium rounded-lg hover:bg-car-electric transition-colors text-sm shadow-sm"
+                  >
+                    + New listing
+                  </button>
+                  <button
+                    onClick={() => router.push('/host/earnings')}
+                    className="px-5 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-sm"
+                  >
+                    View earnings
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'bookings' && (
+              <BookingsList userId={session.userId} bookings={initialBookings} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   )
@@ -138,102 +146,81 @@ function BookingsList({ userId, bookings }: { userId: string; bookings: any[] })
 
   if (bookings.length === 0) {
     return (
-      <FloatingCard glowColor="turbo">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">Your Bookings</h2>
-        <p className="text-gray-600 mb-6">
-          You don&apos;t have any bookings yet
-        </p>
-        <NeonButton
-          variant="primary"
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center">
+        <svg className="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <p className="text-gray-500 text-sm mb-4">No bookings yet.</p>
+        <button
           onClick={() => router.push('/search')}
+          className="px-5 py-2.5 bg-car-neon text-white font-medium rounded-lg hover:bg-car-electric transition-colors text-sm"
         >
-          Find Parking
-        </NeonButton>
-      </FloatingCard>
+          Find parking
+        </button>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {bookings.map((booking, idx) => {
-        const isDriver = userId === booking.driverId
+    <div className="space-y-3">
+      {bookings.map((booking) => {
+        const isDriver  = userId === booking.driverId
         const otherUser = isDriver ? booking.host : booking.driver
-        const statusColors: Record<string, string> = {
-          PENDING: 'bg-yellow-100 text-yellow-800',
-          CONFIRMED: 'bg-blue-100 text-blue-800',
-          ACTIVE: 'bg-green-100 text-green-800',
-          COMPLETED: 'bg-gray-100 text-gray-800',
-          CANCELLED: 'bg-red-100 text-red-800',
-        }
+        const status    = booking.status as string
 
         return (
-          <FloatingCard key={booking.id} glowColor={idx % 3 === 0 ? 'neon' : idx % 3 === 1 ? 'electric' : 'turbo'} delay={0}>
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <div
+            key={booking.id}
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:border-gray-300 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-gray-900 truncate">
                   {booking.listing?.title || 'Parking Spot'}
                 </h3>
-                <p className="text-sm text-gray-600 mb-1">
-                  {booking.listing?.address}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {isDriver ? 'Host' : 'Driver'}: {otherUser?.firstName} {otherUser?.lastName}
-                </p>
+                <p className="text-xs text-gray-500 truncate mt-0.5">{booking.listing?.address}</p>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>
-                {booking.status}
+              <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLES[status] || STATUS_STYLES.COMPLETED}`}>
+                {STATUS_LABEL[status] || status}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-4">
               <div>
-                <p className="text-gray-500">Start</p>
-                <p className="text-gray-900">
-                  {new Date(booking.startTime).toLocaleString()}
-                </p>
+                <p className="text-gray-400 mb-0.5">From</p>
+                <p className="text-gray-700 font-medium">{new Date(booking.startTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
               </div>
               <div>
-                <p className="text-gray-500">End</p>
-                <p className="text-gray-900">
-                  {new Date(booking.endTime).toLocaleString()}
-                </p>
+                <p className="text-gray-400 mb-0.5">To</p>
+                <p className="text-gray-700 font-medium">{new Date(booking.endTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
               </div>
               <div>
-                <p className="text-gray-500">Vehicle</p>
-                <p className="text-gray-900">
-                  {booking.vehicleMake} {booking.vehicleModel}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Plate: {booking.licensePlate}{booking.licensePlateState ? ` (${booking.licensePlateState})` : ''}
-                </p>
+                <p className="text-gray-400 mb-0.5">{isDriver ? 'Host' : 'Driver'}</p>
+                <p className="text-gray-700 font-medium">{otherUser?.firstName} {otherUser?.lastName}</p>
               </div>
               <div>
-                <p className="text-gray-500">Amount</p>
-                <p className="text-car-electric font-semibold">
-                  {formatCurrency(booking.totalAmount)}
-                </p>
+                <p className="text-gray-400 mb-0.5">Total</p>
+                <p className="text-gray-900 font-semibold">{formatCurrency(booking.totalAmount)}</p>
               </div>
             </div>
 
             <div className="flex gap-2">
-              <NeonButton
-                variant="outline"
+              <button
                 onClick={() => router.push(`/bookings/${booking.id}`)}
-                className="flex-1 text-sm"
+                className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
               >
-                View Details
-              </NeonButton>
+                View details
+              </button>
               {booking.status === 'COMPLETED' && !booking.driverRating && isDriver && (
-                <NeonButton
-                  variant="primary"
+                <button
                   onClick={() => router.push(`/bookings/${booking.id}?rate=true`)}
-                  className="flex-1 text-sm"
+                  className="flex-1 sm:flex-none px-4 py-2 bg-car-neon text-white text-xs font-medium rounded-lg hover:bg-car-electric transition-colors"
                 >
-                  Rate
-                </NeonButton>
+                  Leave a rating
+                </button>
               )}
             </div>
-          </FloatingCard>
+          </div>
         )
       })}
     </div>
