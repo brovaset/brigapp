@@ -90,7 +90,7 @@ export default function StripePaymentFormWrapper({
     appearance: {
       theme: 'stripe',
       variables: {
-        colorPrimary: '#007aff',
+        colorPrimary: '#f97316',
         colorBackground: '#ffffff',
         colorDanger: '#ff3b30',
         fontFamily: 'Inter, system-ui, sans-serif',

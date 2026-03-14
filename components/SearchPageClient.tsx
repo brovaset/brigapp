@@ -334,7 +334,7 @@ export default function SearchPageClient({
 
         {showMapView ? (
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border-2 border-gray-200/80 overflow-hidden hover:shadow-[0_8px_30px_rgba(0,122,255,0.08)] transition-shadow duration-300">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border-2 border-gray-200/80 overflow-hidden hover:shadow-[0_8px_30px_rgba(249,115,22,0.08)] transition-shadow duration-300">
               <MapSearch
                 onListingSelect={handleListingSelect}
                 initialCenter={

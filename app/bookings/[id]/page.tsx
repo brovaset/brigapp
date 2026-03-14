@@ -267,8 +267,8 @@ export default function BookingDetailsPage() {
   const otherUser = isDriver ? booking.host : booking.driver
   const statusColors: Record<string, string> = {
     PENDING: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    CONFIRMED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    ACTIVE: 'bg-green-500/20 text-green-400 border-green-500/30',
+    CONFIRMED: 'bg-orange-500/20 text-orange-600 border-orange-500/30',
+    ACTIVE:    'bg-orange-500/30 text-orange-700 border-orange-500/40',
     COMPLETED: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
     CANCELLED: 'bg-red-500/20 text-red-400 border-red-500/30',
   }
@@ -331,7 +331,7 @@ export default function BookingDetailsPage() {
                     onClick={verifyLicensePlate}
                     className={`px-2 py-1 text-xs rounded ${
                       licenseVerified
-                        ? 'bg-green-500/20 text-green-400'
+                        ? 'bg-orange-500/20 text-orange-600'
                         : 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
                     }`}
                   >
@@ -417,7 +417,7 @@ export default function BookingDetailsPage() {
           {booking.status === 'COMPLETED' && (
             <div className="mb-6">
               {alreadyRated ? (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium">
+                <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-orange-800 text-sm font-medium">
                   <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                   You&apos;ve already rated this booking. Thank you for your feedback!
                 </div>

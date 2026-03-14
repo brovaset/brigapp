@@ -10,8 +10,8 @@ type Tab = 'search' | 'listings' | 'bookings'
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING:   'bg-amber-50 text-amber-700 border border-amber-200',
-  CONFIRMED: 'bg-blue-50 text-blue-700 border border-blue-200',
-  ACTIVE:    'bg-green-50 text-green-700 border border-green-200',
+  CONFIRMED: 'bg-orange-50 text-orange-700 border border-orange-200',
+  ACTIVE:    'bg-orange-100 text-orange-800 border border-orange-300',
   COMPLETED: 'bg-gray-100 text-gray-600 border border-gray-200',
   CANCELLED: 'bg-red-50 text-red-600 border border-red-200',
 }

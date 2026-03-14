@@ -199,7 +199,7 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
     const userIcon = {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 8,
-      fillColor: '#007aff',
+      fillColor: '#f97316',
       fillOpacity: 1,
       strokeColor: '#ffffff',
       strokeWeight: 3,
@@ -216,10 +216,10 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
     // Add accuracy circle
     if (locationAccuracy) {
       const circle = new google.maps.Circle({
-        strokeColor: '#007aff',
+        strokeColor: '#f97316',
         strokeOpacity: 0.3,
         strokeWeight: 1,
-        fillColor: '#007aff',
+        fillColor: '#f97316',
         fillOpacity: 0.1,
         map: mapInstance,
         center: position,
@@ -302,10 +302,10 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
 
     const newMarkers = listingsData.map(listing => {
       // Custom marker icon based on distance
-      let iconColor = '#34c759' // Green for close
+      let iconColor = '#f97316' // Orange for close
       if (listing.distance) {
-        if (listing.distance > 2) iconColor = '#ff9500' // Orange for medium
-        if (listing.distance > 5) iconColor = '#ff3b30' // Red for far
+        if (listing.distance > 2) iconColor = '#ea580c' // Dark orange for medium
+        if (listing.distance > 5) iconColor = '#dc2626' // Red for far
       }
 
       const marker = new google.maps.Marker({
@@ -334,13 +334,13 @@ export default function MapSearch({ onListingSelect, userLocation, initialCenter
           <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif;">
             <h3 style="font-weight: 600; margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px;">${listing.title}</h3>
             <p style="margin: 0 0 4px 0; color: #666; font-size: 13px;">${listing.address}</p>
-            ${distanceText ? `<p style="margin: 0 0 8px 0; color: #007aff; font-size: 12px; font-weight: 500;">${distanceText}</p>` : ''}
+            ${distanceText ? `<p style="margin: 0 0 8px 0; color: #f97316; font-size: 12px; font-weight: 500;">${distanceText}</p>` : ''}
             <p style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">$${listing.pricePerHour.toFixed(2)}/hr</p>
             ${listing.averageRating > 0 ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">${listing.averageRating.toFixed(1)} (${listing.ratingCount || 0} reviews)</p>` : ''}
             <button 
               type="button"
               onclick="(function(w){if(w.selectListing)w.selectListing('${listingId.replace(/'/g, "\\'")}');})(window.opener||window.parent||window)"
-              style="margin-top: 8px; padding: 8px 16px; background: linear-gradient(to right, #007aff, #34c759); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;"
+              style="margin-top: 8px; padding: 8px 16px; background: #f97316; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;"
             >
               View Details
             </button>
