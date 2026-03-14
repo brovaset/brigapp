@@ -54,8 +54,8 @@ function NavItem({
       style={
         isActive
           ? {
-              backgroundColor: activeColor === 'car-neon' ? 'rgba(0, 122, 255, 0.1)' : 'rgba(52, 199, 89, 0.1)',
-              color: activeColor === 'car-neon' ? '#007aff' : '#34c759',
+              backgroundColor: 'rgba(249, 115, 22, 0.1)',
+              color: '#f97316',
             }
           : undefined
       }
@@ -234,7 +234,7 @@ function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-car-speed transition-all"
+      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-red-500 transition-all"
     >
       {icons.logout}
       <span>Logout</span>

@@ -1,7 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
-
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
   showText?: boolean
@@ -9,117 +7,33 @@ interface LogoProps {
 }
 
 export default function Logo({ size = 'md', showText = true, className = '' }: LogoProps) {
-  const sizeClasses = {
-    sm: { circle: 40, car: 20, text: 'text-lg' },
-    md: { circle: 60, car: 30, text: 'text-2xl' },
-    lg: { circle: 100, car: 50, text: 'text-4xl' },
-  }
-
-  const { circle, car, text } = sizeClasses[size]
-
-  const isHorizontal = className.includes('flex-row')
-  const containerClass = isHorizontal ? 'flex-row items-center gap-2' : 'flex-col items-center gap-2'
+  const px = { sm: 32, md: 44, lg: 72 }[size]
+  const textSize = { sm: 'text-lg', md: 'text-2xl', lg: 'text-4xl' }[size]
+  const isRow = className.includes('flex-row')
 
   return (
-    <div className={`flex ${containerClass} ${className}`}>
-      {/* Circular Logo with Car */}
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="relative"
-      >
-        <svg
-          width={circle}
-          height={circle}
-          viewBox="0 0 100 100"
-          className="drop-shadow-lg"
-        >
-          {/* Background circle for contrast */}
-          <circle
-            cx="50"
-            cy="50"
-            r="48"
-            fill="#ffffff"
-            stroke="#e5e7eb"
-            strokeWidth="1"
-          />
-          
-          {/* Outer Circle - Bright Green, thicker */}
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="#34c759"
-            strokeWidth="5"
-          />
-          
-          {/* Car - Black, thick strokes for maximum visibility */}
-          <g>
-            {/* Car Body */}
-            <path
-              d="M 25 60 L 25 50 L 30 45 L 50 45 L 70 45 L 75 50 L 75 60 L 70 65 L 30 65 Z"
-              fill="none"
-              stroke="#000000"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            
-            {/* Windows */}
-            <rect
-              x="35"
-              y="48"
-              width="12"
-              height="8"
-              fill="none"
-              stroke="#000000"
-              strokeWidth="4"
-              rx="1"
-            />
-            <rect
-              x="53"
-              y="48"
-              width="12"
-              height="8"
-              fill="none"
-              stroke="#000000"
-              strokeWidth="4"
-              rx="1"
-            />
-            
-            {/* Wheels */}
-            <circle
-              cx="38"
-              cy="65"
-              r="6"
-              fill="none"
-              stroke="#000000"
-              strokeWidth="4"
-            />
-            <circle
-              cx="62"
-              cy="65"
-              r="6"
-              fill="none"
-              stroke="#000000"
-              strokeWidth="4"
-            />
-          </g>
-        </svg>
-      </motion.div>
+    <div className={`flex ${isRow ? 'flex-row items-center gap-2' : 'flex-col items-center gap-2'} ${className}`}>
+      <svg width={px} height={px} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* White fill */}
+        <circle cx="50" cy="50" r="48" fill="#fff" />
+        {/* Orange ring */}
+        <circle cx="50" cy="50" r="45" stroke="#f97316" strokeWidth="5" fill="none" />
+        {/* Car body */}
+        <path
+          d="M22 58 L22 50 L28 44 L50 44 L72 44 L78 50 L78 58 L72 64 L28 64 Z"
+          stroke="#111111" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"
+        />
+        {/* Windows */}
+        <rect x="32" y="47" width="13" height="9" rx="1.5" stroke="#111111" strokeWidth="4" />
+        <rect x="55" y="47" width="13" height="9" rx="1.5" stroke="#111111" strokeWidth="4" />
+        {/* Wheels */}
+        <circle cx="36" cy="64" r="6" stroke="#111111" strokeWidth="4" />
+        <circle cx="64" cy="64" r="6" stroke="#111111" strokeWidth="4" />
+      </svg>
 
-      {/* BRIGAP Text */}
       {showText && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`font-bold ${text} text-gray-900 tracking-tight`}
-        >
-          BRIGAP
-        </motion.div>
+        <span className={`font-bold tracking-tight text-gray-900 ${textSize}`}>BRIGAP</span>
       )}
     </div>
   )
 }
-
