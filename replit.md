@@ -36,7 +36,57 @@ Brigap is a Next.js 16 web application for discovering and booking parking space
 - Build: `npm run build`
 - Start: `npm run start`
 
-## Security — Input Sanitization (lib/validation.ts)
+## Security
+
+### HTTP Security Headers (middleware.ts + next.config.js)
+Every response carries a full suite of security headers:
+- **Content-Security-Policy** — restricts script/style/image/connect sources; `object-src 'none'`; `upgrade-insecure-requests`
+- **Strict-Transport-Security** — 2-year HSTS with `preload` and `includeSubDomains`
+- **X-Frame-Options: SAMEORIGIN** — prevents clickjacking
+- **X-Content-Type-Options: nosniff**
+- **Referrer-Policy: strict-origin-when-cross-origin**
+- **Permissions-Policy** — camera/microphone off; geolocation self only
+- **X-Permitted-Cross-Domain-Policies: none**
+- `X-Powered-By` header disabled (`poweredByHeader: false`)
+- API routes forced to `Cache-Control: no-store`
+
+### Rate Limiting (lib/rateLimit.ts)
+In-memory sliding-window limiter applied per IP per route key:
+
+| Tier | Limit | Window | Used on |
+|------|-------|--------|---------|
+| `auth` | 10 req | 15 min | login, register, Google OAuth |
+| `write` | 30 req | 1 min | create booking/listing/message/payment/saved |
+| `upload` | 20 req | 1 min | file uploads |
+| `ratings` | 5 req | 1 min | rating submissions |
+| `read` | 100 req | 1 min | listing/booking/message reads, health |
+| `global:api` | 300 req | 1 min | global middleware fallback (all `/api/*`) |
+
+IP extraction is hardened against X-Forwarded-For injection; the store is capped at 50,000 entries to prevent memory exhaustion.
+
+### Account Lockout (lib/security.ts)
+Per-email lockout applied on the login route:
+- **5 consecutive failed attempts** triggers a 15-minute lockout
+- Returns **HTTP 423** with a `Retry-After` header during lockout
+- Successful login clears the lockout counter
+
+### Timing-Safe Authentication
+The login route always runs a bcrypt comparison even when the email does not exist (using a dummy hash), eliminating timing-based user-enumeration attacks.
+
+### CORS Policy (middleware.ts)
+API routes reject requests from foreign `Origin` headers with HTTP 403. Allowed origins: same host, `*.replit.dev`, `*.repl.co`, and localhost. The Stripe webhook endpoint is excluded (Stripe sends no Origin header).
+
+### Request Body Size Limit (lib/security.ts)
+`isBodyTooLarge()` checks `Content-Length` before parsing JSON:
+- Login: 10 KB max
+- Register: 20 KB max
+- Returns HTTP 413 if exceeded
+
+### Security Audit Logging (lib/security.ts)
+`logSecurityEvent()` emits structured JSON to stdout prefixed with `[SECURITY]` for each of:
+`LOGIN_SUCCESS`, `LOGIN_FAILURE`, `LOGIN_LOCKED`, `REGISTER_SUCCESS`, `REGISTER_FAILURE`, `RATE_LIMITED`, `CORS_VIOLATION`, `BODY_TOO_LARGE`, `UNAUTHORIZED_ACCESS`, `FORBIDDEN_ACCESS`
+
+### Input Sanitization (lib/validation.ts)
 All user-facing inputs go through `lib/validation.ts` helpers before reaching the database:
 
 | Helper | Purpose |
@@ -59,6 +109,14 @@ All user-facing inputs go through `lib/validation.ts` helpers before reaching th
 | `PATCH /api/bookings/[id]` | status validated against `CONFIRMED|CANCELLED|ACTIVE|COMPLETED`; permission enforced per status |
 | `POST /api/ratings` | rating 1–5 integer, comment max 1000 chars, must be COMPLETED booking |
 | `POST /api/messages` | content max 1000 chars, imageUrl must match upload path pattern |
+
+### Other Protections
+- **SQL injection** — prevented by Prisma ORM parameterized queries
+- **Stripe webhook** — signature verified via `stripe.webhooks.constructEvent`
+- **File uploads** — MIME type whitelist (JPEG/PNG/WebP/GIF), 5 MB cap, randomized filenames
+- **Dev seed route** — blocked with 404 in production (`NODE_ENV === 'production'`)
+- **Auth cookies** — `httpOnly`, `secure` in production, `sameSite: lax`, `path: /`
+- **JWT** — 7-day expiry, verified on every protected request
 
 ## Ratings — Two-Way System
 Both drivers and hosts can independently rate the same booking:
