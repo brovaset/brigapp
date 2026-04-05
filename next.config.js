@@ -44,6 +44,7 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  allowedDevOrigins: ['*.replit.dev', '*.repl.co', '*.worf.replit.dev'],
   async headers() {
     return [
       {
