@@ -8,7 +8,7 @@ import { rateLimit, rateLimitExceeded } from '@/lib/rateLimit'
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://accounts.google.com https://js.stripe.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.replit.dev https://*.repl.co https://*.amazonaws.com https://*.cloudinary.com",
   "connect-src 'self' https://maps.googleapis.com https://api.stripe.com https://accounts.google.com https://*.replit.dev wss://*.replit.dev ws://localhost:*",

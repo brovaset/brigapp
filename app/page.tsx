@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Fragment, Suspense, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -21,9 +21,9 @@ const HomeFeaturesSection = dynamic(
 )
 
 const STATS = [
-  { value: '5,000+', label: 'Parking spaces' },
-  { value: '4.8★', label: 'Average rating' },
-  { value: 'Instant', label: 'Booking' },
+  { value: '5,000+', label: 'Spaces listed' },
+  { value: '4.8',    label: 'Average rating', suffix: '★' },
+  { value: '< 60s',  label: 'To book a spot' },
 ]
 
 export default function Home() {
@@ -50,22 +50,43 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+
       {/* ── Hero ── */}
-      <section className="relative bg-gradient-to-b from-slate-50 to-white overflow-hidden pt-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 text-center">
+      <section className="relative overflow-hidden pt-20 bg-white">
+
+        {/* Dot-grid texture */}
+        <div
+          className="absolute inset-0 opacity-50"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+
+        {/* Orange ambient glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-orange-500/[0.06] rounded-full blur-3xl pointer-events-none" />
+
+        {/* Fade out the pattern at the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 text-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1] mb-5">
+            {/* Eyebrow label */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-xs font-medium text-orange-600 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+              Parking, simplified
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-[62px] font-bold text-gray-900 tracking-tight leading-[1.08] mb-5">
               Park smarter,{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-car-neon to-car-electric">
-                stress less
-              </span>
+              <span className="text-car-neon">stress&nbsp;less</span>
             </h1>
 
-            <p className="text-lg text-gray-500 max-w-xl mx-auto mb-10">
+            <p className="text-lg text-gray-500 max-w-lg mx-auto mb-10 leading-relaxed">
               Find driveways, garages, and private spots near you — book in seconds.
             </p>
           </motion.div>
@@ -82,19 +103,24 @@ export default function Home() {
             </Suspense>
           </motion.div>
 
-          {/* Trust stats */}
+          {/* Trust stats — pill container */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="flex items-center justify-center gap-8 flex-wrap"
+            className="flex justify-center"
           >
-            {STATS.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-lg font-semibold text-gray-900">{s.value}</div>
-                <div className="text-xs text-gray-500">{s.label}</div>
-              </div>
-            ))}
+            <div className="inline-flex items-center rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-sm shadow-sm divide-x divide-gray-200">
+              {STATS.map((s) => (
+                <div key={s.label} className="px-7 py-3.5 text-center">
+                  <div className="text-[15px] font-bold text-gray-900 leading-none">
+                    {s.value}
+                    {s.suffix && <span className="text-car-neon ml-0.5">{s.suffix}</span>}
+                  </div>
+                  <div className="text-[11px] text-gray-500 mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -107,8 +133,8 @@ export default function Home() {
       {/* ── Features + CTA ── */}
       <HomeFeaturesSection />
 
-      {/* ── Minimal footer CTA for non-logged users ── */}
-      <div className="border-t border-gray-100 py-10 text-center bg-white">
+      {/* ── Footer CTA ── */}
+      <div className="border-t border-gray-100 py-10 text-center bg-gray-50">
         <p className="text-sm text-gray-500 mb-4">Have a driveway or garage you&apos;re not using?</p>
         <Link
           href="/register?role=host"
@@ -117,6 +143,7 @@ export default function Home() {
           List your space →
         </Link>
       </div>
+
     </div>
   )
 }
