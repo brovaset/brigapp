@@ -44,26 +44,34 @@ export default function Logo({
         {/* Subtle orange ambient glow — top-right corner */}
         <circle cx="86" cy="14" r="28" fill="#f97316" opacity="0.18" />
 
-        {/* ── P letterform ── */}
+        {/* ── B letterform ── */}
 
         {/* Stem — white vertical bar */}
         <rect x="19" y="14" width="14" height="72" rx="4" fill="white" />
 
-        {/* Bowl outer — white D-shape */}
+        {/* Upper bowl outer — white D-shape (top half) */}
         <path
-          d="M33 14 L52 14 Q74 14 74 36 Q74 58 52 58 L33 58 Z"
+          d="M33 14 L51 14 Q71 14 71 32 Q71 50 51 50 L33 50 Z"
           fill="white"
         />
 
-        {/* Bowl inner — orange counter (the "hole" in the P bowl) */}
+        {/* Upper bowl inner — orange counter */}
         <path
-          d="M33 23 L50 23 Q63 23 63 36 Q63 49 50 49 L33 49 Z"
+          d="M33 23 L49 23 Q61 23 61 32 Q61 41 49 41 L33 41 Z"
           fill="#f97316"
         />
 
-        {/* Location dot — bottom right */}
-        <circle cx="69" cy="77" r="10" fill="#f97316" />
-        <circle cx="69" cy="77" r="5"  fill="white" />
+        {/* Lower bowl outer — white D-shape (bottom half, slightly wider) */}
+        <path
+          d="M33 50 L53 50 Q75 50 75 68 Q75 86 53 86 L33 86 Z"
+          fill="white"
+        />
+
+        {/* Lower bowl inner — orange counter */}
+        <path
+          d="M33 59 L51 59 Q64 59 64 68 Q64 77 51 77 L33 77 Z"
+          fill="#f97316"
+        />
       </svg>
 
       {showText && (

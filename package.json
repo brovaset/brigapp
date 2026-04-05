@@ -27,6 +27,13 @@
     "clean": "rm -rf .next",
     "dev:webpack": "next dev --turbopack=false"
   },
+  "overrides": {
+    "flatted": "3.4.0",
+    "glob": {
+      "minimatch": "9.0.7"
+    },
+    "rollup": "4.59.0"
+  },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.2",
     "@prisma/client": "^6.19.2",
