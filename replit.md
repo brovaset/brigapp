@@ -118,6 +118,32 @@ All user-facing inputs go through `lib/validation.ts` helpers before reaching th
 - **Auth cookies** — `httpOnly`, `secure` in production, `sameSite: lax`, `path: /`
 - **JWT** — 7-day expiry, verified on every protected request
 
+## Visual Design System
+
+### Colours
+- `car-neon` = `#f97316` (orange-500) — primary accent, CTAs, stat highlights
+- `car-electric` = `#ea580c` (orange-600) — hover states, gradients
+- `car-turbo` = `#111111` — dark backgrounds
+
+### Logo (`components/Logo.tsx`)
+- SVG "B" lettermark on `#111111` badge background, `#f97316` inner mark
+- Lowercase "brigap" wordmark (`font-bold tracking-tight`)
+- `onDark` prop: adds white border ring, adjusts text to `text-white`
+
+### Homepage (`app/page.tsx`)
+- Hero: dot-grid radial-gradient texture + orange ambient glow blob (`bg-orange-500/[0.06] blur-3xl`)
+- Eyebrow label: "Parking, simplified" orange pill
+- Stats row: pill container with "5,000+ Spaces listed | 4.8★ Average rating | < 60s To book a spot"
+
+### Features section (`components/HomeFeaturesSection.tsx`)
+- Dark background (`bg-gray-950`) with 01/02/03 numbered features
+- `gap-px` divider grid between feature cards
+- `whileInView` Framer Motion fade-in per card
+
+### Auth panels (`app/login/page.tsx`, `app/register/page.tsx`)
+- Split layout: dark left panel (dot-grid, orange top accent line, social proof) + white right form
+- Left panel copy differs: "The smartest way to park." (login) vs "Earn from your empty driveway." (register)
+
 ## Ratings — Two-Way System
 Both drivers and hosts can independently rate the same booking:
 - `Rating` model has `giverId` to track who rated
