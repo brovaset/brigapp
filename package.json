@@ -1,19 +1,12 @@
 {
   "name": "brigap",
-  "engines": {
-    "node": ">=20.9.0"
-  },
   "version": "1.0.0",
   "private": true,
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "scripts": {
-    "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "npx eslint . --config eslint.config.mjs",
+    "lint": "eslint .",
     "test": "pytest tests/api -v -m api",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -22,8 +15,6 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "db:seed": "prisma db seed",
-    "db:migrate-from-sqlite": "tsx scripts/migrate-sqlite-to-postgres.ts",
     "clean": "rm -rf .next",
     "dev:webpack": "next dev --turbopack=false"
   },
@@ -55,13 +46,11 @@
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.16",
-    "eslint": "^10.0.0",
-    "eslint-config-next": "^0.2.4",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.6",
     "postcss": "^8.4.32",
     "prisma": "^6.19.2",
-    "sql.js": "^1.14.0",
     "tailwindcss": "^3.4.0",
-    "tsx": "^4.21.0",
     "typescript": "^5.3.3",
     "vitest": "^4.0.18"
   }
