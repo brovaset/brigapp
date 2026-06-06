@@ -1,103 +1,129 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyPassword, generateToken } from '@/lib/auth'
+import { generateToken } from '@/lib/auth'
 import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
+import { isValidEmail } from '@/lib/validation'
+import {
+  checkLockout,
+  recordFailedAttempt,
+  clearLockout,
+  timingSafeCompare,
+  logSecurityEvent,
+  isBodyTooLarge,
+} from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
+    // ── Rate limiting ───────────────────────────────────────────────────────
     const rl = rateLimit(request, LIMITS.auth, 'auth:login')
-    if (rl.limited) return rateLimitExceeded(rl.resetAt)
+    if (rl.limited) {
+      logSecurityEvent('RATE_LIMITED', { path: '/api/auth/login' })
+      return rateLimitExceeded(rl.resetAt)
+    }
+
+    // ── Body size guard ─────────────────────────────────────────────────────
+    if (isBodyTooLarge(request, 10 * 1024)) {
+      return NextResponse.json({ error: 'Request body too large' }, { status: 413 })
+    }
 
     let body
     try {
       body = await request.json()
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      )
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 })
     }
 
     const { email, password } = body
 
-    if (!email || !password) {
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+
+    const normalizedEmail = email.toLowerCase().trim()
+    const lockoutKey      = `login:${normalizedEmail}`
+
+    // ── Account lockout check ───────────────────────────────────────────────
+    const lockout = checkLockout(lockoutKey)
+    if (lockout.locked) {
+      const retryAfterSecs = lockout.lockedUntil
+        ? Math.max(1, Math.ceil((lockout.lockedUntil - Date.now()) / 1000))
+        : 900
+      logSecurityEvent('LOGIN_LOCKED', { email: normalizedEmail })
       return NextResponse.json(
-        { error: 'Email and password required' },
-        { status: 400 }
+        { error: 'Account temporarily locked due to too many failed attempts. Try again later.' },
+        {
+          status: 423,
+          headers: { 'Retry-After': String(retryAfterSecs) },
+        },
       )
     }
 
-    // Find user
+    // ── Look up user ────────────────────────────────────────────────────────
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: normalizedEmail },
     })
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
+    // ── Timing-safe comparison (always runs bcrypt) ─────────────────────────
+    const passwordValid = await timingSafeCompare(password, user?.password ?? null)
+
+    if (!user || !passwordValid) {
+      const updated = recordFailedAttempt(lockoutKey)
+      logSecurityEvent('LOGIN_FAILURE', { email: normalizedEmail })
+      if (updated.locked) {
+        return NextResponse.json(
+          { error: 'Account temporarily locked due to too many failed attempts. Try again later.' },
+          { status: 423 },
+        )
+      }
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
+    // Google-only account
     if (!user.password) {
+      recordFailedAttempt(lockoutKey)
+      logSecurityEvent('LOGIN_FAILURE', { email: normalizedEmail, reason: 'google_only_account' })
       return NextResponse.json(
         { error: 'This account uses Google sign-in. Please continue with Google.' },
-        { status: 401 }
+        { status: 401 },
       )
     }
 
-    // Verify password
-    const isValid = await verifyPassword(password, user.password)
+    // ── Success ─────────────────────────────────────────────────────────────
+    clearLockout(lockoutKey)
+    logSecurityEvent('LOGIN_SUCCESS', { email: normalizedEmail, userId: user.id })
 
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
-    }
-
-    // Generate token
     const token = generateToken({
       userId: user.id,
-      email: user.email,
-      role: user.role,
+      email:  user.email,
+      role:   user.role,
     })
 
     const response = NextResponse.json({
       user: {
-        id: user.id,
-        email: user.email,
+        id:        user.id,
+        email:     user.email,
         firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
+        lastName:  user.lastName,
+        role:      user.role,
       },
       token,
     })
 
-    // Set cookie
     response.cookies.set('auth-token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure:   process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge:   7 * 24 * 60 * 60,
+      path:     '/',
     })
 
     return response
   } catch (error) {
     console.error('Login error:', error)
-    const isDbError =
-      error && typeof error === 'object' && (
-        'code' in error ||
-        (typeof (error as Error).message === 'string' && ((error as Error).message.includes('database') || (error as Error).message.includes('Prisma') || (error as Error).message.includes('SQLite')))
-      )
-    return NextResponse.json(
-      {
-        error: isDbError
-          ? 'Database not available. Run: npx prisma generate && npx prisma db push'
-          : 'Internal server error',
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

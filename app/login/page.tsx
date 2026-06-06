@@ -43,24 +43,47 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen bg-white flex">
-      {/* Left panel — orange brand strip (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-2/5 bg-gray-950 flex-col justify-between p-12">
-        <Link href="/">
-          <Logo size="sm" showText={true} className="flex-row" />
-        </Link>
-        <div>
-          <h2 className="text-3xl font-bold text-white mb-3 leading-tight">
+
+      {/* ── Left brand panel ── */}
+      <div className="hidden lg:flex lg:w-[42%] relative flex-col justify-between p-12 overflow-hidden bg-gray-950">
+        {/* Dot-grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.09]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)',
+            backgroundSize: '22px 22px',
+          }}
+        />
+        {/* Orange top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-car-neon" />
+        {/* Subtle orange glow */}
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-car-neon/10 rounded-full blur-3xl" />
+
+        {/* Content */}
+        <div className="relative z-10">
+          <Link href="/">
+            <Logo size="sm" showText onDark />
+          </Link>
+        </div>
+
+        <div className="relative z-10 space-y-4">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-[11px] font-medium text-white/60 tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-car-neon" />
+            Parking, simplified
+          </div>
+          <h2 className="text-3xl font-bold text-white leading-tight">
             The smartest way<br />to park.
           </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
             Thousands of driveways, garages, and private spots ready to book in seconds.
           </p>
         </div>
-        <p className="text-gray-600 text-xs">© 2026 BRIGAP</p>
+
+        <p className="relative z-10 text-gray-600 text-xs">© 2026 brigap</p>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+      {/* ── Right form panel ── */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -69,19 +92,20 @@ function LoginContent() {
         >
           {/* Mobile logo */}
           <div className="flex justify-center mb-8 lg:hidden">
-            <Logo size="sm" showText={true} className="flex-row" />
+            <Logo size="sm" showText />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">Welcome back</h1>
           <p className="text-sm text-gray-500 mb-8">Sign in to your account</p>
 
           {error && <ErrorMessage message={error} className="mb-5" />}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <Input
               type="email"
               label="Email"
               required
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="you@example.com"
@@ -90,6 +114,7 @@ function LoginContent() {
               type="password"
               label="Password"
               required
+              autoComplete="current-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="••••••••"
@@ -98,7 +123,7 @@ function LoginContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-car-neon text-white font-semibold rounded-xl hover:bg-car-electric transition-colors shadow-sm disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-car-neon text-white font-semibold rounded-xl hover:bg-car-electric transition-colors shadow-sm disabled:opacity-50 mt-2 flex items-center justify-center gap-2 text-sm"
             >
               {loading ? <><LoadingSpinner size="sm" /> Signing in…</> : 'Sign in'}
             </button>

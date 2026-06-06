@@ -1,25 +1,27 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, LIMITS, rateLimitExceeded } from '@/lib/rateLimit'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rl = rateLimit(request, LIMITS.read, 'read:health')
+  if (rl.limited) return rateLimitExceeded(rl.resetAt)
+
   try {
-    // Simple health check - verify database connection
     await prisma.$queryRaw`SELECT 1`
-    
+
     return NextResponse.json({
-      status: 'healthy',
+      status:    'healthy',
       timestamp: new Date().toISOString(),
-      database: 'connected',
+      database:  'connected',
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
-        status: 'unhealthy',
+        status:    'unhealthy',
         timestamp: new Date().toISOString(),
-        database: 'disconnected',
+        database:  'disconnected',
       },
-      { status: 503 }
+      { status: 503 },
     )
   }
 }
-

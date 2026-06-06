@@ -50,46 +50,87 @@ function RegisterContent() {
 
   return (
     <div className="min-h-screen bg-white flex">
-      {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-2/5 bg-gray-950 flex-col justify-between p-12">
-        <Link href="/">
-          <Logo size="sm" showText={true} className="flex-row" />
-        </Link>
-        <div>
-          <h2 className="text-3xl font-bold text-white mb-3 leading-tight">
+
+      {/* ── Left brand panel ── */}
+      <div className="hidden lg:flex lg:w-[42%] relative flex-col justify-between p-12 overflow-hidden bg-gray-950">
+        {/* Dot-grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.09]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)',
+            backgroundSize: '22px 22px',
+          }}
+        />
+        {/* Orange top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-car-neon" />
+        {/* Subtle orange glow */}
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-car-neon/10 rounded-full blur-3xl" />
+
+        {/* Content */}
+        <div className="relative z-10">
+          <Link href="/">
+            <Logo size="sm" showText onDark />
+          </Link>
+        </div>
+
+        <div className="relative z-10 space-y-4">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-[11px] font-medium text-white/60 tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-car-neon" />
+            Start earning today
+          </div>
+          <h2 className="text-3xl font-bold text-white leading-tight">
             Earn from your<br />empty driveway.
           </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
             List once and let drivers find you — or sign up as a driver and start parking smarter.
           </p>
         </div>
-        <p className="text-gray-600 text-xs">© 2026 BRIGAP</p>
+
+        {/* Social proof */}
+        <div className="relative z-10 flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/10">
+          <div className="flex -space-x-2">
+            {['#f97316', '#3b82f6', '#10b981', '#8b5cf6'].map((c, i) => (
+              <div
+                key={i}
+                className="w-7 h-7 rounded-full border-2 border-gray-950 flex items-center justify-center text-[10px] font-bold text-white"
+                style={{ backgroundColor: c }}
+              >
+                {String.fromCharCode(65 + i)}
+              </div>
+            ))}
+          </div>
+          <div>
+            <p className="text-white text-xs font-medium">5,000+ spaces listed</p>
+            <p className="text-gray-500 text-[11px]">Join the community</p>
+          </div>
+        </div>
       </div>
 
-      {/* Right form panel */}
+      {/* ── Right form panel ── */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="w-full max-w-sm"
+          className="w-full max-w-sm py-8"
         >
           {/* Mobile logo */}
           <div className="flex justify-center mb-8 lg:hidden">
-            <Logo size="sm" showText={true} className="flex-row" />
+            <Logo size="sm" showText />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Create account</h1>
-          <p className="text-sm text-gray-500 mb-8">Join BRIGAP — it's free</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">Create account</h1>
+          <p className="text-sm text-gray-500 mb-8">Join brigap — it's free</p>
 
           {error && <ErrorMessage message={error} className="mb-5" />}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <div className="grid grid-cols-2 gap-3">
               <Input
                 type="text"
                 label="First name"
                 required
+                autoComplete="given-name"
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 placeholder="Jane"
@@ -98,6 +139,7 @@ function RegisterContent() {
                 type="text"
                 label="Last name"
                 required
+                autoComplete="family-name"
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 placeholder="Smith"
@@ -108,6 +150,7 @@ function RegisterContent() {
               type="email"
               label="Email"
               required
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="you@example.com"
@@ -116,6 +159,7 @@ function RegisterContent() {
             <Input
               type="tel"
               label="Phone (optional)"
+              autoComplete="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+1 (555) 000-0000"
@@ -125,6 +169,7 @@ function RegisterContent() {
               type="password"
               label="Password"
               required
+              autoComplete="new-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="Min. 8 characters"
@@ -145,7 +190,7 @@ function RegisterContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-car-neon text-white font-semibold rounded-xl hover:bg-car-electric transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-car-neon text-white font-semibold rounded-xl hover:bg-car-electric transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
             >
               {loading ? <><LoadingSpinner size="sm" /> Creating account…</> : 'Create account'}
             </button>

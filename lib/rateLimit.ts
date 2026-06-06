@@ -11,13 +11,23 @@ interface WindowRecord {
   timestamps: number[]
 }
 
-const store = new Map<string, WindowRecord>()
+const store    = new Map<string, WindowRecord>()
+const MAX_STORE_SIZE = 50_000 // prevent unbounded memory growth
 let lastCleanup = Date.now()
 
 function cleanup(): void {
   const now = Date.now()
-  if (now - lastCleanup < 120_000) return // run at most every 2 minutes
+  if (now - lastCleanup < 120_000) return
   lastCleanup = now
+
+  // If store is still too large after natural expiry, evict oldest entries
+  if (store.size > MAX_STORE_SIZE) {
+    const keys = [...store.keys()]
+    for (let i = 0; i < keys.length / 2; i++) {
+      store.delete(keys[i])
+    }
+  }
+
   for (const [key, record] of store) {
     if (record.timestamps.length === 0) store.delete(key)
   }
@@ -50,14 +60,40 @@ export const LIMITS = {
 } as const
 
 // ---------------------------------------------------------------------------
-// Core helpers
+// IP extraction — hardened against header injection
 // ---------------------------------------------------------------------------
 
-function getIp(request: Request): string {
+const PRIVATE_IP_RE =
+  /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|::1$|fc|fd)/i
+
+/**
+ * Returns the most-likely real client IP from the request headers.
+ * Strips port numbers and validates that the value looks like an IP address.
+ */
+export function getClientIp(request: Request): string {
   const xff = request.headers.get('x-forwarded-for')
-  if (xff) return xff.split(',')[0].trim()
-  return request.headers.get('x-real-ip') ?? 'unknown'
+  if (xff) {
+    // XFF may be comma-separated; the first entry is the original client
+    const candidate = xff.split(',')[0].trim().replace(/:\d+$/, '')
+    if (/^[\d.:a-fA-F]+$/.test(candidate) && candidate.length <= 45) {
+      return candidate
+    }
+  }
+
+  const realIp = request.headers.get('x-real-ip')
+  if (realIp) {
+    const candidate = realIp.trim().replace(/:\d+$/, '')
+    if (/^[\d.:a-fA-F]+$/.test(candidate) && candidate.length <= 45) {
+      return candidate
+    }
+  }
+
+  return 'unknown'
 }
+
+// ---------------------------------------------------------------------------
+// Core rate-limit check
+// ---------------------------------------------------------------------------
 
 /**
  * Check whether the calling IP is within the rate limit for a given route.
@@ -72,9 +108,9 @@ export function rateLimit(
 ): { limited: boolean; remaining: number; resetAt: number } {
   cleanup()
 
-  const ip = getIp(request)
-  const key = `${ip}:${routeKey}`
-  const now = Date.now()
+  const ip          = getClientIp(request)
+  const key         = `${ip}:${routeKey}`
+  const now         = Date.now()
   const windowStart = now - config.windowMs
 
   let record = store.get(key)
@@ -83,10 +119,9 @@ export function rateLimit(
     store.set(key, record)
   }
 
-  // Prune timestamps outside the current window
   record.timestamps = record.timestamps.filter((ts) => ts > windowStart)
 
-  const used = record.timestamps.length
+  const used    = record.timestamps.length
   const resetAt =
     used > 0 ? record.timestamps[0] + config.windowMs : now + config.windowMs
 
@@ -98,7 +133,11 @@ export function rateLimit(
   return { limited: false, remaining: config.limit - used - 1, resetAt }
 }
 
-/** Returns a 429 NextResponse with Retry-After and X-RateLimit-Reset headers. */
+// ---------------------------------------------------------------------------
+// Response helpers
+// ---------------------------------------------------------------------------
+
+/** Returns a 429 NextResponse with standard rate-limit headers. */
 export function rateLimitExceeded(resetAt: number): NextResponse {
   const retryAfterSecs = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000))
   return NextResponse.json(
@@ -111,4 +150,19 @@ export function rateLimitExceeded(resetAt: number): NextResponse {
       },
     },
   )
+}
+
+/**
+ * Attach informational X-RateLimit-* headers to an existing response
+ * so clients can track their quota on successful requests.
+ */
+export function applyRateLimitHeaders(
+  response: NextResponse,
+  config: RateLimitConfig,
+  remaining: number,
+  resetAt: number,
+): void {
+  response.headers.set('X-RateLimit-Limit',     String(config.limit))
+  response.headers.set('X-RateLimit-Remaining', String(remaining))
+  response.headers.set('X-RateLimit-Reset',     String(Math.ceil(resetAt / 1000)))
 }
